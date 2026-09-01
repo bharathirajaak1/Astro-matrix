@@ -3,10 +3,13 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Switch, View } from 'react-native';
 
+import { useEntitlement } from '@/features/entitlements';
 import { REMINDER_HOUR, REMINDER_MINUTE, useNotificationsStore } from '@/features/notifications';
 import { useProfileStore } from '@/features/profile/store';
-import { Card, Screen, SectionHeader, Txt } from '@/ui/components';
+import { Button, Card, Screen, SectionHeader, Txt } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
+
+const isDev = (globalThis as { __DEV__?: boolean }).__DEV__ ?? false;
 
 function reminderTimeLabel(): string {
   const h12 = ((REMINDER_HOUR + 11) % 12) + 1;
@@ -22,6 +25,9 @@ export default function Settings() {
   const enabled = useNotificationsStore((s) => s.enabled);
   const permission = useNotificationsStore((s) => s.permission);
   const setEnabled = useNotificationsStore((s) => s.setEnabled);
+
+  const remediesUnlocked = useEntitlement((s) => s.remediesUnlocked);
+  const resetEntitlement = useEntitlement((s) => s.reset);
 
   const [busy, setBusy] = useState(false);
   const blocked = permission === 'denied';
@@ -70,6 +76,33 @@ export default function Settings() {
             <Txt variant="caption" color="primary" onPress={() => void Linking.openSettings()}>
               Open device settings
             </Txt>
+          </View>
+        ) : null}
+      </Card>
+
+      <SectionHeader title="AstroMatrix Plus" />
+      <Card>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}
+        >
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt variant="heading">Remedies</Txt>
+            <Txt variant="caption" color={remediesUnlocked ? 'primary' : 'textMuted'}>
+              {remediesUnlocked ? 'Unlocked on this device' : 'Locked'}
+            </Txt>
+          </View>
+          {!remediesUnlocked ? (
+            <FontAwesome name="chevron-right" size={14} color={theme.colors.textMuted} />
+          ) : null}
+        </View>
+        {!remediesUnlocked ? (
+          <View style={{ marginTop: spacing.sm }}>
+            <Button label="See what's included" variant="secondary" onPress={() => router.push('/paywall')} />
+          </View>
+        ) : null}
+        {isDev && remediesUnlocked ? (
+          <View style={{ marginTop: spacing.sm }}>
+            <Button label="Reset unlock (dev)" variant="ghost" onPress={() => void resetEntitlement()} />
           </View>
         ) : null}
       </Card>

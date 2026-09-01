@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useEntitlement } from '@/features/entitlements';
 import { useNotificationsStore } from '@/features/notifications';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
@@ -18,13 +19,19 @@ export default function RootLayout() {
   const notificationsHydrated = useNotificationsStore((s) => s.hydrated);
   const syncNotifications = useNotificationsStore((s) => s.sync);
 
-  // Load the persisted profile, then reconcile the daily reminder against it.
+  const hydrateEntitlement = useEntitlement((s) => s.hydrate);
+
+  // Load persisted state on launch: profile, then the daily reminder and the
+  // remedy entitlement.
   useEffect(() => {
     void (async () => {
       await hydrateProfile();
-      await hydrateNotifications(useProfileStore.getState().profile);
+      await Promise.all([
+        hydrateNotifications(useProfileStore.getState().profile),
+        hydrateEntitlement(),
+      ]);
     })();
-  }, [hydrateProfile, hydrateNotifications]);
+  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement]);
 
   // Re-schedule whenever the profile changes (new name/DOB -> new forecast text).
   useEffect(() => {
@@ -61,6 +68,9 @@ export default function RootLayout() {
           name="profile/edit"
           options={{ presentation: 'modal', title: 'Your details' }}
         />
+        <Stack.Screen name="paywall" options={{ presentation: 'modal', title: 'AstroMatrix Plus' }} />
+        <Stack.Screen name="remedy/[number]" options={{ title: 'Remedy' }} />
+        <Stack.Screen name="remedy/life-path" options={{ title: 'Life Path alignment' }} />
       </Stack>
     </SafeAreaProvider>
   );
