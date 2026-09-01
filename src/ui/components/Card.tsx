@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react';
-import { Pressable, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  View,
+  type AccessibilityState,
+  type ViewStyle,
+} from 'react-native';
 
 import { radius, spacing, useTheme } from '../theme';
 
@@ -9,9 +14,20 @@ interface CardProps {
   style?: ViewStyle;
   /** Use the alt surface colour (for nested cards). */
   alt?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityState?: AccessibilityState;
 }
 
-export function Card({ children, onPress, style, alt }: CardProps) {
+export function Card({
+  children,
+  onPress,
+  style,
+  alt,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+}: CardProps) {
   const theme = useTheme();
   const base: ViewStyle = {
     backgroundColor: alt ? theme.colors.surfaceAlt : theme.colors.surface,
@@ -26,6 +42,10 @@ export function Card({ children, onPress, style, alt }: CardProps) {
     return (
       <Pressable
         onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={accessibilityState}
         style={({ pressed }) => [base, pressed ? { opacity: 0.7 } : null, style]}
       >
         {children}

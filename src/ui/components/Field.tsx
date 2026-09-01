@@ -19,6 +19,8 @@ export function Field({ label, error, hint, ...inputProps }: FieldProps) {
       </Txt>
       <TextInput
         placeholderTextColor={theme.colors.textMuted}
+        accessibilityLabel={label}
+        accessibilityHint={hint}
         {...inputProps}
         style={{
           borderWidth: 1,

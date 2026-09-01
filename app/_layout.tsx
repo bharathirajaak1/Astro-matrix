@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useEntitlement } from '@/features/entitlements';
 import { useNotificationsStore } from '@/features/notifications';
+import { useThemePreferenceStore } from '@/features/preferences';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
 
@@ -20,18 +21,20 @@ export default function RootLayout() {
   const syncNotifications = useNotificationsStore((s) => s.sync);
 
   const hydrateEntitlement = useEntitlement((s) => s.hydrate);
+  const hydrateThemePreference = useThemePreferenceStore((s) => s.hydrate);
 
-  // Load persisted state on launch: profile, then the daily reminder and the
-  // remedy entitlement.
+  // Load persisted state on launch: profile, then the daily reminder, the
+  // remedy entitlement, and the appearance preference.
   useEffect(() => {
     void (async () => {
       await hydrateProfile();
       await Promise.all([
         hydrateNotifications(useProfileStore.getState().profile),
         hydrateEntitlement(),
+        hydrateThemePreference(),
       ]);
     })();
-  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement]);
+  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference]);
 
   // Re-schedule whenever the profile changes (new name/DOB -> new forecast text).
   useEffect(() => {

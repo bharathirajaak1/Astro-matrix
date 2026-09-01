@@ -1,12 +1,13 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Switch, View } from 'react-native';
+import { Linking, Pressable, Switch, View } from 'react-native';
 
 import { useEntitlement } from '@/features/entitlements';
 import { REMINDER_HOUR, REMINDER_MINUTE, useNotificationsStore } from '@/features/notifications';
 import { useProfileStore } from '@/features/profile/store';
-import { Button, Card, Screen, SectionHeader, Txt } from '@/ui/components';
+import { type ThemePreference, useThemePreferenceStore } from '@/features/preferences';
+import { Button, Card, Screen, SectionHeader, SegmentedControl, Txt } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
 
 const isDev = (globalThis as { __DEV__?: boolean }).__DEV__ ?? false;
@@ -29,6 +30,9 @@ export default function Settings() {
   const remediesUnlocked = useEntitlement((s) => s.remediesUnlocked);
   const resetEntitlement = useEntitlement((s) => s.reset);
 
+  const themePreference = useThemePreferenceStore((s) => s.preference);
+  const setThemePreference = useThemePreferenceStore((s) => s.setPreference);
+
   const [busy, setBusy] = useState(false);
   const blocked = permission === 'denied';
 
@@ -43,6 +47,19 @@ export default function Settings() {
 
   return (
     <Screen>
+      <SectionHeader title="Appearance" />
+      <Card>
+        <SegmentedControl<ThemePreference>
+          value={themePreference}
+          onChange={(next) => void setThemePreference(next)}
+          options={[
+            { value: 'system', label: 'System' },
+            { value: 'light', label: 'Light' },
+            { value: 'dark', label: 'Dark' },
+          ]}
+        />
+      </Card>
+
       <SectionHeader title="Daily forecast reminder" />
       <Card>
         <View
@@ -64,6 +81,8 @@ export default function Settings() {
             onValueChange={onToggle}
             disabled={busy || blocked}
             trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+            accessibilityLabel="Daily forecast reminder"
+            accessibilityHint={`Sends a notification at ${reminderTimeLabel()} every day`}
           />
         </View>
 
@@ -73,9 +92,17 @@ export default function Settings() {
               Notifications are turned off for AstroMatrix. Enable them in your device settings, then
               turn this on again.
             </Txt>
-            <Txt variant="caption" color="primary" onPress={() => void Linking.openSettings()}>
-              Open device settings
-            </Txt>
+            <Pressable
+              onPress={() => void Linking.openSettings()}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Open device settings"
+              style={{ alignSelf: 'flex-start', paddingVertical: spacing.xs }}
+            >
+              <Txt variant="caption" color="primary">
+                Open device settings
+              </Txt>
+            </Pressable>
           </View>
         ) : null}
       </Card>

@@ -50,7 +50,13 @@ export default function NumerologyScreen() {
         const value = report[key];
         const open = openKey === key;
         return (
-          <Card key={key} onPress={() => setOpenKey(open ? null : key)}>
+          <Card
+            key={key}
+            onPress={() => setOpenKey(open ? null : key)}
+            accessibilityLabel={`${title}, ${value}`}
+            accessibilityState={{ expanded: open }}
+            accessibilityHint={open ? 'Double tap to collapse' : 'Double tap to expand'}
+          >
             <View style={{ flexDirection: 'row', gap: spacing.lg, alignItems: 'center' }}>
               <NumberBadge value={value} label={`${title} number ${value}`} />
               <View style={{ flex: 1, gap: 2 }}>

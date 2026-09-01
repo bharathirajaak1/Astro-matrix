@@ -10,7 +10,11 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, subtitle }: SectionHeaderProps) {
   return (
-    <View style={{ gap: spacing.xs, marginTop: spacing.sm }}>
+    <View
+      style={{ gap: spacing.xs, marginTop: spacing.sm }}
+      accessibilityRole="header"
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+    >
       <Txt variant="label" color="textMuted">
         {title.toUpperCase()}
       </Txt>

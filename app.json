@@ -5,11 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bharathiraja.astromatrix",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.bharathiraja.astromatrix",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,7 +33,21 @@
           "color": "#6C4CE0"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F6F5F2",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#141317"
+          }
+        }
+      ],
+      "expo-font"
     ]
   }
 }

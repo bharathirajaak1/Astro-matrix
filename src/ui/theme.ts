@@ -1,62 +1,18 @@
 /**
- * Design tokens + a `useTheme()` hook. Colors are theme-aware (light / dark via
- * the OS setting); spacing / radius / typography are shared.
+ * `useTheme()`: the active colour palette plus shared spacing / radius /
+ * typography. By default the palette follows the OS setting, but a user
+ * preference (Settings > Appearance) can pin light or dark regardless of the
+ * system. Colour values themselves live in `palette.ts` so they stay unit
+ * -testable without pulling in React Native.
  */
 import { useColorScheme } from 'react-native';
 
-export interface ColorTokens {
-  bg: string;
-  surface: string;
-  surfaceAlt: string;
-  border: string;
-  text: string;
-  textMuted: string;
-  primary: string;
-  primarySoft: string;
-  onPrimary: string;
-  accent: string;
-  accentSoft: string;
-  danger: string;
-  gridEmpty: string;
-  gridFilled: string;
-  overlay: string;
-}
+import { useThemePreferenceStore } from '@/features/preferences/themeStore';
 
-const light: ColorTokens = {
-  bg: '#F6F5F2',
-  surface: '#FFFFFF',
-  surfaceAlt: '#F0EEE9',
-  border: '#E4E1DA',
-  text: '#1C1B1A',
-  textMuted: '#6C6862',
-  primary: '#6C4CE0',
-  primarySoft: '#EEE9FC',
-  onPrimary: '#FFFFFF',
-  accent: '#B8791F',
-  accentSoft: '#F6EAD5',
-  danger: '#C1443B',
-  gridEmpty: '#F0EEE9',
-  gridFilled: '#EEE9FC',
-  overlay: 'rgba(28,27,26,0.55)',
-};
+import { PALETTES, type ColorTokens, type ThemeName } from './palette';
 
-const dark: ColorTokens = {
-  bg: '#141317',
-  surface: '#1F1D24',
-  surfaceAlt: '#26232B',
-  border: '#332F3A',
-  text: '#F3F1EE',
-  textMuted: '#9C978F',
-  primary: '#B7A0FF',
-  primarySoft: '#2B2442',
-  onPrimary: '#1A1330',
-  accent: '#E7B968',
-  accentSoft: '#3A2F1C',
-  danger: '#F0837A',
-  gridEmpty: '#26232B',
-  gridFilled: '#2B2442',
-  overlay: 'rgba(0,0,0,0.6)',
-};
+export type { ColorTokens, ThemeName };
+export { PALETTES };
 
 export const spacing = {
   xs: 4,
@@ -83,8 +39,6 @@ export const typography = {
   caption: { fontSize: 12, fontWeight: '500' as const },
 } as const;
 
-export type ThemeName = 'light' | 'dark';
-
 export interface Theme {
   name: ThemeName;
   colors: ColorTokens;
@@ -93,14 +47,18 @@ export interface Theme {
   typography: typeof typography;
 }
 
+function buildTheme(name: ThemeName): Theme {
+  return { name, colors: PALETTES[name], spacing, radius, typography };
+}
+
+/**
+ * The active theme: the user's Appearance preference when set to Light/Dark,
+ * otherwise whatever the OS reports.
+ */
 export function useTheme(): Theme {
   const scheme = useColorScheme();
-  const name: ThemeName = scheme === 'dark' ? 'dark' : 'light';
-  return {
-    name,
-    colors: name === 'dark' ? dark : light,
-    spacing,
-    radius,
-    typography,
-  };
+  const preference = useThemePreferenceStore((s) => s.preference);
+  const name: ThemeName =
+    preference === 'system' ? (scheme === 'dark' ? 'dark' : 'light') : preference;
+  return buildTheme(name);
 }

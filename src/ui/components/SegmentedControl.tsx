@@ -31,6 +31,7 @@ export function SegmentedControl<T extends string>({
         </Txt>
       ) : null}
       <View
+        accessibilityRole="radiogroup"
         style={{
           flexDirection: 'row',
           backgroundColor: theme.colors.surfaceAlt,
@@ -47,8 +48,9 @@ export function SegmentedControl<T extends string>({
             <Pressable
               key={option.value}
               onPress={() => onChange(option.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active, selected: active }}
+              accessibilityLabel={option.label}
               style={{
                 flex: 1,
                 paddingVertical: spacing.sm + 2,

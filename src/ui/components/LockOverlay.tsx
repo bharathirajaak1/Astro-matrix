@@ -32,16 +32,21 @@ interface LockOverlayProps {
  */
 export function LockOverlay({
   children,
-  title = 'Remedies are locked',
-  message = 'Unlock personalised remedies for your missing and weak numbers with AstroMatrix Plus.',
-  ctaLabel = 'Unlock (coming soon)',
+  title = 'This content is locked',
+  message = 'Unlock AstroMatrix Plus to see the full content.',
+  ctaLabel = "See what's included",
   onPressCta,
 }: LockOverlayProps) {
   const theme = useTheme();
 
   return (
     <View style={{ borderRadius: radius.lg, overflow: 'hidden' }}>
-      <View style={{ opacity: 0.25 }} pointerEvents="none" accessibilityElementsHidden>
+      <View
+        style={{ opacity: 0.25 }}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         {children}
       </View>
       <View style={[FILL, { padding: spacing.xl, gap: spacing.md, backgroundColor: theme.colors.overlay }]}>

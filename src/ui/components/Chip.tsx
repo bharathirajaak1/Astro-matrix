@@ -18,7 +18,7 @@ export function Chip({ label, tone = 'neutral', accessibilityLabel }: ChipProps)
     neutral: theme.colors.surfaceAlt,
     primary: theme.colors.primarySoft,
     accent: theme.colors.accentSoft,
-    danger: theme.colors.primarySoft,
+    danger: theme.colors.dangerSoft,
   };
   const fg: Record<Tone, 'text' | 'primary' | 'accent' | 'danger'> = {
     neutral: 'text',
