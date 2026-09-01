@@ -29,13 +29,13 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerRight: () => (
           <Pressable
-            onPress={() => router.push('/profile/edit')}
+            onPress={() => router.push('/settings')}
             hitSlop={12}
             style={{ paddingHorizontal: 16 }}
             accessibilityRole="button"
-            accessibilityLabel="Edit your details"
+            accessibilityLabel="Open settings"
           >
-            <FontAwesome name="user" size={18} color={theme.colors.primary} />
+            <FontAwesome name="cog" size={18} color={theme.colors.primary} />
           </Pressable>
         ),
       }}

@@ -10,8 +10,9 @@ import { profileRepo, type ProfileInput } from './repo';
 
 interface ProfileState {
   profile: Profile | null;
-  /** False until the first read from storage resolves. */
+  /** False until the first read from storage resolves (success or failure). */
   hydrated: boolean;
+  /** Load the persisted profile from AsyncStorage. Called once on app launch. */
   hydrate: () => Promise<void>;
   save: (input: ProfileInput) => Promise<Profile>;
   reset: () => Promise<void>;
@@ -22,8 +23,13 @@ export const useProfileStore = create<ProfileState>((set) => ({
   hydrated: false,
 
   hydrate: async () => {
-    const profile = await profileRepo.getCurrent();
-    set({ profile, hydrated: true });
+    try {
+      const profile = await profileRepo.getCurrent();
+      set({ profile, hydrated: true });
+    } catch {
+      // Storage unreadable - start clean rather than blocking the launch.
+      set({ profile: null, hydrated: true });
+    }
   },
 
   save: async (input) => {
