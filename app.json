@@ -48,6 +48,13 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bb486ef1-0c80-43eb-8f3e-08b9130830d6"
+      }
+    },
+    "owner": "bharathiraja.a"
   }
 }
