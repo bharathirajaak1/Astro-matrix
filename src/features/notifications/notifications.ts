@@ -11,8 +11,16 @@
  * from the last app open. Daily users see current copy; a future milestone can
  * switch to a rolling set of date-triggered notifications for exact per-day text.
  */
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
+import type * as ExpoNotifications from 'expo-notifications';
+
+export const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+const Notifications: typeof ExpoNotifications | null = isExpoGo
+  ? null
+  : require('expo-notifications');
 
 import type { Profile } from '@/core/types';
 import { todayISO } from '@/lib/date';
@@ -31,35 +39,50 @@ let handlerConfigured = false;
 
 /** Register how a notification behaves while the app is foregrounded. Idempotent. */
 export function configureNotifications(): void {
-  if (handlerConfigured) return;
+  if (handlerConfigured || !Notifications) return;
   handlerConfigured = true;
+
+  if (Platform.OS === 'android') {
+    void Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+      name: 'Daily forecast',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#7E57C2',
+    });
+  }
+
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    }),
+    handleNotification: async () =>
+      ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      } as any),
   });
 }
 
-function toState(response: Notifications.NotificationPermissionsStatus): PermissionState {
+function toState(
+  response: ExpoNotifications.NotificationPermissionsStatus
+): PermissionState {
   if (response.granted) return 'granted';
-  if (response.canAskAgain && response.status === 'undetermined') return 'undetermined';
+  if (response.canAskAgain && response.status === 'undetermined')
+    return 'undetermined';
   return response.canAskAgain ? 'undetermined' : 'denied';
 }
 
 export async function getPermissionState(): Promise<PermissionState> {
+  if (!Notifications) return 'undetermined';
   return toState(await Notifications.getPermissionsAsync());
 }
 
 /** Prompts the OS permission dialog. Call this only from a user action. */
 export async function requestPermission(): Promise<PermissionState> {
+  if (!Notifications) return 'granted';
   return toState(await Notifications.requestPermissionsAsync());
 }
 
 async function ensureAndroidChannel(): Promise<void> {
-  if (Platform.OS !== 'android') return;
+  if (!Notifications || Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
     name: 'Daily forecast',
     importance: Notifications.AndroidImportance.DEFAULT,
@@ -67,6 +90,7 @@ async function ensureAndroidChannel(): Promise<void> {
 }
 
 export async function cancelDailyReminder(): Promise<void> {
+  if (!Notifications) return;
   try {
     await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
   } catch {
@@ -76,6 +100,8 @@ export async function cancelDailyReminder(): Promise<void> {
 
 /** Cancel any existing reminder and schedule a fresh one for 08:00 local. */
 export async function scheduleDailyReminder(profile: Profile): Promise<void> {
+  if (!Notifications) return;
+
   await ensureAndroidChannel();
   await cancelDailyReminder();
 

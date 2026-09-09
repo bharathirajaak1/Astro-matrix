@@ -5,10 +5,18 @@ import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useEntitlement } from '@/features/entitlements';
-import { useNotificationsStore } from '@/features/notifications';
+import { useNotificationsStore, configureNotifications } from '@/features/notifications';
 import { useThemePreferenceStore } from '@/features/preferences';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
+import { useRitualStore } from '@/features/remedies/ritualStore';
+
+import { LogBox } from 'react-native';
+
+// Suppress Expo Go push notification warning on Android development
+LogBox.ignoreLogs([
+  'expo-notifications: Android Push notifications',
+]);
 
 export default function RootLayout() {
   const theme = useTheme();
@@ -26,12 +34,14 @@ export default function RootLayout() {
   // Load persisted state on launch: profile, then the daily reminder, the
   // remedy entitlement, and the appearance preference.
   useEffect(() => {
+    configureNotifications();
     void (async () => {
       await hydrateProfile();
       await Promise.all([
         hydrateNotifications(useProfileStore.getState().profile),
         hydrateEntitlement(),
         hydrateThemePreference(),
+        useRitualStore.getState().hydrate(),
       ]);
     })();
   }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference]);

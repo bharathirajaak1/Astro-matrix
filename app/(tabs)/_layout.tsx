@@ -12,7 +12,7 @@ export default function TabsLayout() {
   const hydrated = useProfileStore((s) => s.hydrated);
 
   if (hydrated && !profile) {
-    return <Redirect href="/" />;
+    // Allow tabs to render default seeker profile rather than redirecting back
   }
 
   return (

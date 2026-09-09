@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Switch, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-haptics';
 import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen() {
@@ -10,25 +9,23 @@ export default function SettingsScreen() {
   const [traditionalRem, setTraditionalRem] = useState(true);
   const [modernRem, setModernRem] = useState(true);
 
-  const toggleSwitch = (setter: any, val: boolean) => {
+  const toggleSwitch = (setter: React.Dispatch<React.SetStateAction<boolean>>, val: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setter(!val);
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.headerSubu>CUSTOMIZATION & CONTROLS</Text>
+        <Text style={styles.headerSub}>CUSTOMIZATION & CONTROLS</Text>
         <Text style={styles.headerTitle}>Settings & Preferences</Text>
 
-        { /* Notification Preferences */ }
         <Text style={styles.sectionLabel}>SMART REMINDERS</Text>
         <View style={styles.card}>
           <View style={styles.settingRow}>
             <View style={styles.textBox}>
-              <Text style={styles.rowHintTitle}>Morning Alignment (Determined 8 AM)</Text>
-              <Text style={styles.rowSubtitle}>Receive today's power color and theme</Text>
+              <Text style={styles.rowHintTitle}>Morning Alignment (8:00 AM)</Text>
+              <Text style={styles.rowSubtitle}>Receive today’s power color and theme</Text>
             </View>
             <Switch
               value={morningNotif}
@@ -40,7 +37,7 @@ export default function SettingsScreen() {
           <View style={styles.settingRow}>
             <View style={styles.textBox}>
               <Text style={styles.rowHintTitle}>Golden Hour Alert (1:30 PM)</Text>
-              <Text style={styles.rowSubtitle}>Get ready for your most focused window</Text>
+              <Text style={styles.rowSubtitle}>Get ready for your focused window</Text>
             </View>
             <Switch
               value={goldenNotif}
@@ -51,8 +48,8 @@ export default function SettingsScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.textBox}>
-              <Text style={styles.rowHintTitle}>Evening Check-in (9 PM)</Text>
-              <Text style={styles.rowSubtitle}>Check off today's quest and keep your streak</Text>
+              <Text style={styles.rowHintTitle}>Evening Check-in (9:00 PM)</Text>
+              <Text style={styles.rowSubtitle}>Check off today’s quest and keep streak</Text>
             </View>
             <Switch
               value={eveningNotif}
@@ -62,8 +59,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        { /* Remedy Sources */ }
-        <Text style={styles.sectionLabel}>REMEEY PREFERENCES</Text>
+        <Text style={styles.sectionLabel}>REMEDY PREFERENCES</Text>
         <View style={styles.card}>
           <View style={styles.settingRow}>
             <View style={styles.textBox}>
@@ -73,14 +69,58 @@ export default function SettingsScreen() {
             <Switch
               value={traditionalRem}
               onValueChange={() => toggleSwitch(setTraditionalRem, traditionalRem)}
-              trackColor={{ false: '#DEEDEE', true: '#5E7563'_B�ς�՚Y]ς��Y]��[O^��[\˜�][�ԛ��O���Y]��[O^��[\˝^��O��^�[O^��[\˜���[�]_O�[�\��ZXܛ�T]Y\���^��^�[O^��[\˜����X�]_O��M�^HX�[ۘX�HX�]�Y���^��՚Y]ς���]���[YO^�[�\���[_B�ە�[YP�[��O^�
-HO����T��]�
-�][�\���[K[�\���[J_B��X����܏^���[�N�	��QQQI��YN�	��QM�M���_B�ς�՚Y]ς�՚Y]ς���ʈ�X��ܚ\[ۈ	�\��Z[Y\�
-��B��Y]��[O^��[\˘�\�O��^�[O^��[\˜���[�]_O�[��]\��^��^�[O^��[\˜����X�]_O���YH��\\��
-Y�H]
-�����Y�HX\
-O�^���X�X�S�X�]B��[O^��[\˝\ܘYP�]۟B�۔�\��^�
-HO�[\��[\�
-	��[Z][HX��\���	�[����Έ8�,��K�[۝܈8�,�K�^K��K�B���^�[O^��[\˝\ܘYP�]ە^O�X[�Y�H�X��ܚ\[ۏ�^����X�X�S�X�]O��՚Y]ς���ʈ]X�[��\\��\��Z[Y\�
-��B��Y]��[O^��[\˙\��Z[Y\���O��^�[O^��[\˙\��Z[Y\�]_O�'�&HH�[�H�[Z[�\��^��^�[O^��[\˙\��Z[Y\�^O��\�\\�H��\\����H�X\�[�YK��Hۉ���Z\�H����H[�\��؛[\���]�Hٙ�\�\�H�X[��]]�H�Y�\��[[�H�[[ݙHY[�[�����[��X�H[�\�^H�]HY�\�X\��[�\�X��\�[[X][H�\Y�H[�\�X�[ۜ�[�]]YK��IܙH�Y�\�H��Y\�[�Hۋ��՚Y]ς�՚Y]ς���ܛ��Y]ς���Y�P\�XU�Y]ς�
-NB���ۜ��[\�H�[T�Y]�ܙX]J�Y�P\�XN���^�K�X��ܛ�[���܎�	�ё������K��۝Z[�\���Y[�Έ��X��ܛ�[���܎�	�ѐQ�Q���Y[�Л��N�HK�XY\��X����۝�^�N�LK��܎�	��	��۝�ZY��	͉�]\��X�[�ΈK�HK�XY\�]N�ٛ۝�^�N����۝�ZY��	�����܎�	�̐̍L���X\��[���X\��[����N�NK��X�[ۓX�[���۝�^�N�LK�۝�ZY��	�����܎�	��	�]\��X�[�ΈKX\��[����X\��[����N�K��\����X��ܛ�[���܎�	�ё�������ܙ\��Y]\ΈNY[�ΈNX\��[����N�M��ܙ\��Y�K�ܙ\���܎�	��M�ML	�K��][�ԛ�Έ��^\�X�[ێ�	ܛ����\�Y�P�۝[��	��X�KX�]�Y[��[Yے][\Έ	��[�\��Y[�ՙ\�X�[�K�^�����^�KY[�ԚY��L�K����[�]N���۝�^�N�M�۝�ZY��	͉���܎�	�̐̍L���K�����X�]N�ٛ۝�^�N�LK��܎�	�����͐��X\��[����[�RZY��M�K�\ܘYP�]ێ���X��ܛ�[���܎�	��QM�M����ܙ\��Y]\ΈL�Y[�ՙ\�X�[�L�[Yے][\Έ	��[�\��X\��[���L�K�\ܘYP�]ە^����܎�	�ё�������۝�^�N�L��۝�ZY��	���K�\��Z[Y\������X��ܛ�[���܎�	�э�Q�	��ܙ\��Y]\ΈL�Y[�ΈMX\��[���K�\��Z[Y\�]N���۝�^�N�L��۝�ZY��	�����܎�	���͍�	�X\��[����N�K�\��Z[Y\�^�ٛ۝�^�N�LK��܎�	����MP��[�RZY��M�^[Yێ�	��[�\��K�JN�
+              trackColor={{ false: '#DEEDEE', true: '#5E7563' }}
+            />
+          </View>
+          <View style={styles.settingRow}>
+            <View style={styles.textBox}>
+              <Text style={styles.rowHintTitle}>Modern Micro-Quests</Text>
+              <Text style={styles.rowSubtitle}>Actionable habit shifts</Text>
+            </View>
+            <Switch
+              value={modernRem}
+              onValueChange={() => toggleSwitch(setModernRem, modernRem)}
+              trackColor={{ false: '#DEEDEE', true: '#5E7563' }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.rowHintTitle}>Plan Status</Text>
+          <Text style={styles.rowSubtitle}>Free Compass (Life Path + Blockage Map)</Text>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={() => Alert.alert('Premium Access', 'Manage subscription settings')}
+          >
+            <Text style={styles.upgradeButtonText}>Manage Subscription</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.disclaimerBox}>
+          <Text style={styles.disclaimerTitle}>A Gentle Reminder</Text>
+          <Text style={styles.disclaimerText}>
+            This app is a compass, not a guarantee. Small positive nudges help you face each day with intention.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { padding: 20, backgroundColor: '#FAF9F6', paddingBottom: 45 },
+  headerSub: { fontSize: 11, color: '#888077', fontWeight: '600', letterSpacing: 1.5 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#2C2523', marginTop: 4, marginBottom: 18 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: '#888077', letterSpacing: 1, marginTop: 6, marginBottom: 8 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: '#E7E4E0' },
+  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  textBox: { flex: 1, paddingRight: 12 },
+  rowHintTitle: { fontSize: 14, fontWeight: '600', color: '#2C2523' },
+  rowSubtitle: { fontSize: 11, color: '#7C736C', marginTop: 2, lineHeight: 16 },
+  upgradeButton: { backgroundColor: '#5E7563', borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
+  upgradeButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  disclaimerBox: { backgroundColor: '#F4F1F0', borderRadius: 12, padding: 14, marginTop: 8 },
+  disclaimerTitle: { fontSize: 12, fontWeight: '700', color: '#7C6744', marginBottom: 4 },
+  disclaimerText: { fontSize: 11, color: '#8C7A5C', lineHeight: 17, textAlign: 'center' },
+});

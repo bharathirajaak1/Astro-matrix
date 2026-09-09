@@ -14,14 +14,14 @@ type CoreKey = (typeof CORE_NUMBERS)[number]['key'];
 function trailText(report: NumerologyReport, key: CoreKey): string {
   const r = report.reductions;
   if (key === 'lifePath') {
-    return `${(r.lifePathParts ?? []).join('  +  ')}  =  ${(r.lifePath ?? []).join('  →  ')}`;
+    return `${(r.lifePathParts ?? []).join(' + ')} = ${(r.lifePath ?? []).join(' -> ')}`;
   }
   if (key === 'birthday') {
     return 'Taken directly from the day of the month, without reducing.';
   }
   const chain = r[key] ?? [];
   return chain.length > 1
-    ? chain.join('  →  ')
+    ? chain.join(' -> ')
     : `${chain[0] ?? ''} is already a single digit.`;
 }
 
@@ -39,10 +39,10 @@ export default function NumerologyScreen() {
 
   return (
     <Screen>
-      <View style={{ gap: spacing.xs }}>
+      <View style={{ gap: spacing.xs, marginBottom: spacing.sm }}>
         <Txt variant="title">{profile.fullName}</Txt>
         <Txt variant="caption" color="textMuted">
-          Born {profile.dob} · {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
+          Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
         </Txt>
       </View>
 
