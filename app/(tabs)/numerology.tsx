@@ -8,6 +8,8 @@ import { CORE_NUMBERS, meaningFor } from '@/data/interpretations';
 import { useProfileStore } from '@/features/profile/store';
 import { Card, NumberBadge, Screen, Txt } from '@/ui/components';
 import { spacing } from '@/ui/theme';
+import { SummaryBanner } from '@/ui/components/SummaryBanner';
+import { getTimeOfDayGreeting, generateNumbersSummary } from '@/core/summaryGenerator';
 
 type CoreKey = (typeof CORE_NUMBERS)[number]['key'];
 
@@ -36,7 +38,12 @@ export default function NumerologyScreen() {
   if (!profile || !report) {
     return <Redirect href="/" />;
   }
-
+const greeting = getTimeOfDayGreeting(profile.fullName);
+  const summaryText = generateNumbersSummary(
+    report.lifePath ?? 1,
+    report.soulUrge ?? report.destiny ?? 1,
+    report.soulUrge ? 'Soul Urge' : 'Destiny'
+  );
   return (
     <Screen>
       <View style={{ gap: spacing.xs, marginBottom: spacing.sm }}>
@@ -45,7 +52,7 @@ export default function NumerologyScreen() {
           Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
         </Txt>
       </View>
-
+<SummaryBanner greeting={greeting} summaryText={summaryText} />
       {CORE_NUMBERS.map(({ key, title, blurb }) => {
         const value = report[key];
         const open = openKey === key;

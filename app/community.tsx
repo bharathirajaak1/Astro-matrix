@@ -12,11 +12,18 @@ import {
 import * as Haptics from 'expo-haptics';
 
 // Guard expo-av to prevent crash in Expo Go SDK 57
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 let Audio: any = null;
-try {
-  Audio = require('expo-av').Audio;
-} catch {
-  Audio = null;
+if (!isExpoGo) {
+  try {
+    Audio = require('expo-av')?.Audio;
+  } catch {
+    Audio = null;
+  }
 }
 
 interface WinItem {

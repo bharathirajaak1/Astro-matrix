@@ -1,16 +1,3 @@
-/**
- * expo-notifications glue for the daily forecast reminder.
- *
- * - One repeating local notification at 08:00 local time.
- * - Permission is only ever requested from `requestPermission()`, which the
- *   settings toggle calls - never on app launch.
- * - `syncDailyReminder()` runs on every app open to (re)schedule with fresh
- *   text or to clear the reminder if it was turned off / permission was revoked.
- *
- * Note: a DAILY trigger carries static text, so the body reflects the forecast
- * from the last app open. Daily users see current copy; a future milestone can
- * switch to a rolling set of date-triggered notifications for exact per-day text.
- */
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import type * as ExpoNotifications from 'expo-notifications';
@@ -18,123 +5,101 @@ import type * as ExpoNotifications from 'expo-notifications';
 export const isExpoGo =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-const Notifications: typeof ExpoNotifications | null = isExpoGo
-  ? null
-  : require('expo-notifications');
+let Notifications: typeof ExpoNotifications | null = null;
+try {
+  if (!isExpoGo) {
+    Notifications = require('expo-notifications');
+  }
+} catch {
+  Notifications = null;
+}
 
-import type { Profile } from '@/core/types';
-import { todayISO } from '@/lib/date';
-
-import { buildReminderContent } from './content';
-
-export const REMINDER_HOUR = 8;
-export const REMINDER_MINUTE = 0;
-
-const DAILY_REMINDER_ID = 'astromatrix.daily-forecast';
-const ANDROID_CHANNEL_ID = 'daily-forecast';
-
-export type PermissionState = 'granted' | 'denied' | 'undetermined';
-
-let handlerConfigured = false;
-
-/** Register how a notification behaves while the app is foregrounded. Idempotent. */
-export function configureNotifications(): void {
-  if (handlerConfigured || !Notifications) return;
-  handlerConfigured = true;
-
-  if (Platform.OS === 'android') {
-    void Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-      name: 'Daily forecast',
-      importance: Notifications.AndroidImportance.DEFAULT,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#7E57C2',
-    });
+export async function configureNotifications(): Promise<void> {
+  if (!Notifications) {
+    return;
   }
 
-  Notifications.setNotificationHandler({
-    handleNotification: async () =>
-      ({
-        shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      } as any),
-  });
-}
-
-function toState(
-  response: ExpoNotifications.NotificationPermissionsStatus
-): PermissionState {
-  if (response.granted) return 'granted';
-  if (response.canAskAgain && response.status === 'undetermined')
-    return 'undetermined';
-  return response.canAskAgain ? 'undetermined' : 'denied';
-}
-
-export async function getPermissionState(): Promise<PermissionState> {
-  if (!Notifications) return 'undetermined';
-  return toState(await Notifications.getPermissionsAsync());
-}
-
-/** Prompts the OS permission dialog. Call this only from a user action. */
-export async function requestPermission(): Promise<PermissionState> {
-  if (!Notifications) return 'granted';
-  return toState(await Notifications.requestPermissionsAsync());
-}
-
-async function ensureAndroidChannel(): Promise<void> {
-  if (!Notifications || Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'Daily forecast',
-    importance: Notifications.AndroidImportance.DEFAULT,
-  });
-}
-
-export async function cancelDailyReminder(): Promise<void> {
-  if (!Notifications) return;
   try {
-    await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
-  } catch {
-    // No matching scheduled notification - nothing to cancel.
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('daily-forecast', {
+        name: 'Daily Forecast & Alignments',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#57715E',
+      });
+    }
+  } catch (err) {
+    console.log('Notification handler configuration skipped.');
   }
 }
 
-/** Cancel any existing reminder and schedule a fresh one for 08:00 local. */
-export async function scheduleDailyReminder(profile: Profile): Promise<void> {
-  if (!Notifications) return;
-
-  await ensureAndroidChannel();
-  await cancelDailyReminder();
-
-  const { title, body } = buildReminderContent(profile, todayISO());
-
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_REMINDER_ID,
-    content: { title, body },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: REMINDER_HOUR,
-      minute: REMINDER_MINUTE,
-      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null),
-    },
-  });
-}
-
-/**
- * Reconcile the scheduled reminder with the current preference + permission +
- * profile. Safe to call on every app open. Returns the effective state so the
- * store can correct itself if permission was revoked in OS settings.
- */
-export async function syncDailyReminder(params: {
-  enabled: boolean;
-  profile: Profile | null;
-}): Promise<{ scheduled: boolean; permission: PermissionState }> {
-  const permission = await getPermissionState();
-
-  if (!params.enabled || !params.profile || permission !== 'granted') {
-    await cancelDailyReminder();
-    return { scheduled: false, permission };
+export async function scheduleDailyNotifications(userName?: string): Promise<void> {
+  if (!Notifications) {
+    return;
   }
 
-  await scheduleDailyReminder(params.profile);
-  return { scheduled: true, permission };
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    const morningTitle = userName ? `🌅 Good morning, ${userName}` : '🌅 Good Morning!';
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: morningTitle,
+        body: 'Your free daily forecast & power color are ready. Align your frequency for today.',
+        data: { type: 'morning', target: '/(tabs)/forecast' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 8,
+        minute: 0,
+        ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
+      },
+    });
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '☀️ Golden Hour Approaching',
+        body: 'Your midday alignment window opens soon. Take 2 minutes for your micro-ritual.',
+        data: { type: 'midday', target: '/(tabs)/forecast' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 13,
+        minute: 30,
+        ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
+      },
+    });
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🌙 Evening Wind-Down',
+        body: 'Time for your evening reflection. Review your day’s energetic flow.',
+        data: { type: 'evening', target: '/(tabs)/remedies' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 21,
+        minute: 0,
+        ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
+      },
+    });
+  } catch (error) {
+    console.warn('Could not schedule notifications:', error);
+  }
 }

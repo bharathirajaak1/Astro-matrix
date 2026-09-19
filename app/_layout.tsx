@@ -1,17 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useEntitlement } from '@/features/entitlements';
-import { useNotificationsStore, configureNotifications } from '@/features/notifications';
+import { useNotificationsStore } from '@/features/notifications';
+import {
+  configureNotifications,
+  scheduleDailyNotifications,
+} from '@/features/notifications/notifications';
 import { useThemePreferenceStore } from '@/features/preferences';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
 import { useRitualStore } from '@/features/remedies/ritualStore';
-
-import { LogBox } from 'react-native';
+import { useAdStore } from '@/features/ads/adStore';
 
 // Suppress Expo Go push notification warning on Android development
 LogBox.ignoreLogs([
@@ -30,30 +33,33 @@ export default function RootLayout() {
 
   const hydrateEntitlement = useEntitlement((s) => s.hydrate);
   const hydrateThemePreference = useThemePreferenceStore((s) => s.hydrate);
+  const hydrateAds = useAdStore((s) => s.hydrate);
 
-  // Load persisted state on launch: profile, then the daily reminder, the
-  // remedy entitlement, and the appearance preference.
+  // Load persisted state on launch
   useEffect(() => {
     configureNotifications();
     void (async () => {
       await hydrateProfile();
+      const currentProfile = useProfileStore.getState().profile;
+      void scheduleDailyNotifications(currentProfile?.fullName);
+
       await Promise.all([
-        hydrateNotifications(useProfileStore.getState().profile),
+        hydrateNotifications(currentProfile),
         hydrateEntitlement(),
         hydrateThemePreference(),
-        useRitualStore.getState().hydrate(),
+        hydrateAds(),
       ]);
     })();
-  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference]);
+  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateAds]);
 
-  // Re-schedule whenever the profile changes (new name/DOB -> new forecast text).
+  // Re-schedule whenever profile changes
   useEffect(() => {
     if (notificationsHydrated) {
       void syncNotifications(profile);
     }
   }, [profile, notificationsHydrated, syncNotifications]);
 
-  // Re-schedule on every return to the foreground ("reschedule on app open").
+  // Re-schedule on app foreground
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
@@ -75,6 +81,16 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="splash" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/disclaimer" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/system-choice" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/details" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/blueprint-result" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/loshu-reveal" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/swot-audit" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding/swot" options={{ headerShown: false }} />
+        
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', title: 'Settings' }} />
         <Stack.Screen

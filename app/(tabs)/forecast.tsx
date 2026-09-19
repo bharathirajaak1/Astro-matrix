@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildNumerologyReport } from '@/core/numerology';
@@ -58,7 +58,7 @@ export default function ForecastScreen() {
   const report = forecastData?.report;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -129,8 +129,8 @@ export default function ForecastScreen() {
               Personal Day {cycles?.personalDay ?? 1}: Energetic Alignment
             </Text>
             <Text style={styles.cardBody}>
-              {forecast?.theme ||
-                `Today carries the vibrational frequency of Personal Day ${cycles?.personalDay}. Align your highest priorities with deliberate focus, minimizing scattered reactions.`}
+              {(forecast as any)?.theme ||
+                `Today carries the vibrational frequency of Personal Day ${cycles?.personalDay ?? 1}. Align your highest priorities with deliberate focus.`}
             </Text>
 
             <View style={styles.divider} />

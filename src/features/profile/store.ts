@@ -16,6 +16,7 @@ interface ProfileState {
   hydrate: () => Promise<void>;
   save: (input: ProfileInput) => Promise<Profile>;
   reset: () => Promise<void>;
+  updateFlags: (flags: Partial<Profile>) => void;
 }
 
 export const useProfileStore = create<ProfileState>((set) => ({
@@ -41,5 +42,11 @@ export const useProfileStore = create<ProfileState>((set) => ({
   reset: async () => {
     await profileRepo.clear();
     set({ profile: null });
+  },
+
+  updateFlags: (flags) => {
+    set((state) => ({
+      profile: state.profile ? { ...state.profile, ...flags } : null,
+    }));
   },
 }));
