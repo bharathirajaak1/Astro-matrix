@@ -2,13 +2,13 @@
 
 ## Version 2.1 — Progressive Disclosure Onboarding (Branch: v2-onboarding-improvements)
 
-### Planned Changes:
-- [ ] Core Identity Revealed: Collapse Life Path, Destiny, Soul Urge sections
-- [ ] Core Identity Revealed: Show Summary only when all 3 sections expanded
-- [ ] Sacred Matrix: Collapse Strengths and Blockages sections
-- [ ] Sacred Matrix: Show Insight only when both sections expanded
-- [ ] Energetic Audit (SWOT): Collapse Weaknesses, Opportunities, Blind Spot
-- [ ] Energetic Audit (SWOT): Show Paywall Bridge only when all expanded
+### Completed Changes:
+- [x] Core Identity Revealed: Collapse Life Path, Destiny, Soul Urge sections
+- [x] Core Identity Revealed: Show Summary & Matrix Unlock button only when all 3 sections expanded
+- [x] Sacred Matrix: Collapse Strengths and Blockages sections
+- [x] Sacred Matrix: Show Insight & SWOT Navigation CTA only when both sections expanded
+- [x] Energetic Audit (SWOT): Collapse Strengths, Weaknesses, Opportunities, Blind Spot
+- [x] Energetic Audit (SWOT): Show Paywall Bridge only when all 4 expanded
 
 ## Version 2.0 — Onboarding Content Improvements (Branch: v2-onboarding-backup)
 
