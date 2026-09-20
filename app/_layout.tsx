@@ -34,6 +34,7 @@ export default function RootLayout() {
   const hydrateEntitlement = useEntitlement((s) => s.hydrate);
   const hydrateThemePreference = useThemePreferenceStore((s) => s.hydrate);
   const hydrateAds = useAdStore((s) => s.hydrate);
+  const hydrateRituals = useRitualStore((s) => s.hydrate);
 
   // Load persisted state on launch
   useEffect(() => {
@@ -48,9 +49,10 @@ export default function RootLayout() {
         hydrateEntitlement(),
         hydrateThemePreference(),
         hydrateAds(),
+        hydrateRituals(),
       ]);
     })();
-  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateAds]);
+  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateAds, hydrateRituals]);
 
   // Re-schedule whenever profile changes
   useEffect(() => {
