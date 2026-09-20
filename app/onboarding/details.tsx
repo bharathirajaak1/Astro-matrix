@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { setUserProfile } from '@/features/profile/profileStore';
 import { useProfileStore } from '@/features/profile/store';
 import { useProgressStore } from '@/features/remedies/progressStore';
 
@@ -82,14 +81,6 @@ export default function DetailsEntryScreen() {
     }
 
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    await setUserProfile({
-      fullName: fullName.trim(),
-      dob,
-      system,
-      isSampleUser: false,
-      hasAcceptedDisclaimer: true,
-    });
 
     await (useProfileStore.getState() as any).save({
       fullName: fullName.trim(),
