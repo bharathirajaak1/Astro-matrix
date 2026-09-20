@@ -9,7 +9,6 @@
     "isolatedModules": true,
     "noEmit": false,
     "types": ["jest", "node"],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
