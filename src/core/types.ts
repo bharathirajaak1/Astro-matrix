@@ -25,10 +25,7 @@ export interface Profile {
   /** ISO timestamp the profile was created. */
   createdAt: string;
   blueprintCalculated?: boolean;
-  loShuUnlocked?: boolean;
-  hasViewedSwot?: boolean;
   hasSubscribed?: boolean;
-  rewardedAdsWatchedToday?: number;
 }
 
 export interface NumerologyReport {
