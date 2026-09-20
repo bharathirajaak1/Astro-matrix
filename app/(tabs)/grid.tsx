@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { SummaryBanner } from '@/ui/components/SummaryBanner';
 import { getTimeOfDayGreeting, generateLoShuSummary } from '@/core/summaryGenerator';
+import { buildLoShuGrid } from '@/core/loShu';
 
 interface PlaneInfo {
   friendlyName: string;
@@ -70,22 +71,9 @@ export default function LoShuScreen() {
   const router = useRouter();
   const profile = useProfileStore((s) => s.profile) as any;
 
-  // Extract digits from user birth date
+  // Extract digits from user birth date via the canonical Lo Shu engine
   const rawDob = profile?.dob || profile?.birthDate || '1970-09-20';
-const birthDateDigits = rawDob
-  .replace(/\D/g, '')
-  .split('')
-  .map((d: string) => Number(d));
-
-  const digitCounts: Record<number, number> = {};
-  for (let i = 1; i <= 9; i++) {
-    digitCounts[i] = 0;
-  }
-  birthDateDigits.forEach((d: number) => {
-    if (d >= 1 && d <= 9) {
-      digitCounts[d] = (digitCounts[d] || 0) + 1;
-    }
-  });
+  const digitCounts: Record<number, number> = buildLoShuGrid(rawDob).counts;
 
   const getStatusText = (active: number, total: number) => {
     if (active === 0) return '🌱 Awakening';
