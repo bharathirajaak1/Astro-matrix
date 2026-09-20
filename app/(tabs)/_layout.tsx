@@ -34,6 +34,13 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <FontAwesome name="home" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="numerology"
         options={{
           title: 'Numbers',
