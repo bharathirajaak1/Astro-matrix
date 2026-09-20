@@ -14,7 +14,6 @@ export default function Paywall() {
   const theme = useTheme();
   const router = useRouter();
   const profile = useProfileStore((s) => s.profile);
-  const updateFlags = useProfileStore((s) => s.updateFlags);
   const unlock = useEntitlement((s) => s.unlock);
   const restore = useEntitlement((s) => s.restore);
 
