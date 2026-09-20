@@ -4,22 +4,11 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { NUMBER_TRAITS } from '@/core/archetypes';
+import { buildLoShuGrid } from '@/core/loShu';
 import { Screen, Txt, Card, Button } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
 
 const GRID_ORDER = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-
-function getDigitCounts(dob: string): Record<number, number> {
-  const counts: Record<number, number> = {};
-  const digitsOnly = dob.replace(/\D/g, '');
-  for (const ch of digitsOnly) {
-    const num = Number(ch);
-    if (num >= 1 && num <= 9) {
-      counts[num] = (counts[num] || 0) + 1;
-    }
-  }
-  return counts;
-}
 
 export default function LoShuRevealScreen() {
   const theme = useTheme();
@@ -27,7 +16,7 @@ export default function LoShuRevealScreen() {
   const profile = useProfileStore((s) => s.profile);
 
   const dob = (profile as any)?.dob || (profile as any)?.birthDate || '2000-01-01';
-  const counts = getDigitCounts(dob);
+  const counts: Record<number, number> = buildLoShuGrid(dob).counts;
 
   const activeDigits = GRID_ORDER.filter((d) => (counts[d] || 0) > 0);
   const missingDigits = GRID_ORDER.filter((d) => !counts[d] || counts[d] === 0);
