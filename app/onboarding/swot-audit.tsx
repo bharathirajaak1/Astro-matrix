@@ -4,23 +4,12 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildNumerologyReport } from '@/core/numerology';
+import { buildLoShuGrid } from '@/core/loShu';
 import { NUMBER_TRAITS, LIFE_PATH_ARCHETYPES } from '@/core/archetypes';
 import { Screen, Txt, Card, Button } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
 
 const GRID_ORDER = [4, 9, 2, 3, 5, 7, 8, 1, 6];
-
-function getDigitCounts(dob: string): Record<number, number> {
-  const counts: Record<number, number> = {};
-  const digitsOnly = dob.replace(/\D/g, '');
-  for (const ch of digitsOnly) {
-    const num = Number(ch);
-    if (num >= 1 && num <= 9) {
-      counts[num] = (counts[num] || 0) + 1;
-    }
-  }
-  return counts;
-}
 
 export default function SwotAuditScreen() {
   const theme = useTheme();
@@ -28,7 +17,7 @@ export default function SwotAuditScreen() {
   const profile = useProfileStore((s) => s.profile);
 
   const dob = (profile as any)?.dob || (profile as any)?.birthDate || '2000-01-01';
-  const counts = getDigitCounts(dob);
+  const counts: Record<number, number> = buildLoShuGrid(dob).counts;
 
   const report = profile
     ? buildNumerologyReport({
