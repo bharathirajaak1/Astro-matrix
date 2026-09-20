@@ -5,6 +5,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 
 import { useEntitlement } from '@/features/entitlements';
 import { useProfileStore } from '@/features/profile/store';
+import { buildLoShuGrid } from '@/core/loShu';
 import { track } from '@/lib/analytics';
 import { Button, Card, Screen, Txt } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
@@ -21,8 +22,9 @@ export default function Paywall() {
   const [note, setNote] = useState<string | null>(null);
 
   // Derive missing numbers from user birthdate
-  const digits = (profile?.dob || '').replace(/\D/g, '').split('').map(Number);
-  const missingNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => !digits.includes(n));
+  const missingNumbers = profile?.dob
+    ? buildLoShuGrid(profile.dob).missing
+    : [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const missingLabel = missingNumbers.length > 0 ? missingNumbers.join(', ') : null;
 
   const dynamicTitle = missingLabel
