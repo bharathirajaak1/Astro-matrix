@@ -13,7 +13,6 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
-import { useProgressStore } from '@/features/remedies/progressStore';
 
 export default function DetailsEntryScreen() {
   const params = useLocalSearchParams();
@@ -89,7 +88,6 @@ export default function DetailsEntryScreen() {
     } as any);
 
     useProfileStore.getState().updateFlags({ blueprintCalculated: true });
-    useProgressStore.getState().resetProgress();
 
     router.push('/onboarding/blueprint-result' as any);
   };
