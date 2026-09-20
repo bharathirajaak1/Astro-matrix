@@ -59,7 +59,6 @@ export default function Paywall() {
     try {
       const ok = await unlock();
       if (ok) {
-        updateFlags({ hasSubscribed: true });
         handleFinish();
       } else {
         setNote('That didn’t go through. Please try again.');
@@ -77,7 +76,6 @@ export default function Paywall() {
     try {
       const found = await restore();
       if (found) {
-        updateFlags({ hasSubscribed: true });
         handleFinish();
       } else {
         setNote('No previous purchase found on this device.');

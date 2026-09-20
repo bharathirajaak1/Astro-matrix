@@ -25,7 +25,6 @@ export interface Profile {
   /** ISO timestamp the profile was created. */
   createdAt: string;
   blueprintCalculated?: boolean;
-  hasSubscribed?: boolean;
 }
 
 export interface NumerologyReport {
