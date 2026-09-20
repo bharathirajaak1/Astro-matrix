@@ -2,18 +2,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 
-import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
 
 export default function TabsLayout() {
   const theme = useTheme();
   const router = useRouter();
-  const profile = useProfileStore((s) => s.profile);
-  const hydrated = useProfileStore((s) => s.hydrated);
-
-  if (hydrated && !profile) {
-    // Allow tabs to render default seeker profile rather than redirecting back
-  }
 
   return (
     <Tabs
