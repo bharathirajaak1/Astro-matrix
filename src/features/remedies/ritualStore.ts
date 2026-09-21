@@ -16,6 +16,14 @@ export interface RitualPersistenceData {
   completedNumbers: number[];
   questDay: number;
   lastCompletedDate: string | null;
+  /**
+   * Date the Active Quest (for the current `questDay`) was last completed, or
+   * `null` if today's/the current day's quest has not been completed yet.
+   * Distinct from `lastCompletedDate` (which also covers the daily pack) so
+   * that `questDay` only advances on a real calendar-day rollover, never
+   * immediately on same-day completion - see `hydrate()`.
+   */
+  lastQuestCompletionDate: string | null;
   streakDays: number;
   dailyPackCompleted: boolean;
   dailyPackItems: RitualPackProgress;
@@ -40,6 +48,7 @@ const DEFAULT_STATE: RitualPersistenceData = {
   completedNumbers: [],
   questDay: 1,
   lastCompletedDate: null,
+  lastQuestCompletionDate: null,
   streakDays: 1,
   dailyPackCompleted: false,
   dailyPackItems: DEFAULT_PACK_ITEMS,
@@ -56,15 +65,34 @@ export const useRitualStore = create<RitualState>((set, get) => ({
         const today = todayISO();
         const isSameDay = stored.lastCompletedDate === today;
 
-        set({
+        const storedQuestDay = stored.questDay || 1;
+        const storedLastQuestCompletionDate = stored.lastQuestCompletionDate ?? null;
+        // Only advance once a real calendar day has passed since the Active
+        // Quest was completed - never on the same day it was completed, and
+        // never when it hasn't been completed at all (`null`).
+        const questDayRolledOver =
+          storedLastQuestCompletionDate !== null && storedLastQuestCompletionDate !== today;
+        const nextQuestDay =
+          questDayRolledOver && storedQuestDay < 7 ? storedQuestDay + 1 : storedQuestDay;
+        const nextLastQuestCompletionDate = questDayRolledOver ? null : storedLastQuestCompletionDate;
+
+        const hydratedData: RitualPersistenceData = {
           completedNumbers: stored.completedNumbers || [],
-          questDay: stored.questDay || 1,
+          questDay: nextQuestDay,
           lastCompletedDate: stored.lastCompletedDate,
+          lastQuestCompletionDate: nextLastQuestCompletionDate,
           streakDays: stored.streakDays || 1,
           dailyPackCompleted: isSameDay ? (stored.dailyPackCompleted ?? false) : false,
           dailyPackItems: isSameDay && stored.dailyPackItems ? stored.dailyPackItems : DEFAULT_PACK_ITEMS,
-          hydrated: true,
-        });
+        };
+
+        // Persist the rollover immediately so a later relaunch doesn't see
+        // the same stale `lastQuestCompletionDate` and advance again.
+        if (questDayRolledOver) {
+          await setItem(RITUAL_STORAGE_KEY, hydratedData);
+        }
+
+        set({ ...hydratedData, hydrated: true });
       } else {
         set({ hydrated: true });
       }
@@ -81,13 +109,16 @@ export const useRitualStore = create<RitualState>((set, get) => ({
       ? state.completedNumbers
       : [...state.completedNumbers, num];
 
-    const nextQuestDay = state.questDay < 7 ? state.questDay + 1 : 7;
     const nextStreak = state.lastCompletedDate === today ? state.streakDays : state.streakDays + 1;
 
+    // `questDay` itself is not advanced here - it only moves forward on a
+    // real calendar-day rollover, detected in `hydrate()`. Completing today's
+    // quest just records that today's quest is done.
     const updatedData: RitualPersistenceData = {
       completedNumbers: updatedCompleted,
-      questDay: nextQuestDay,
+      questDay: state.questDay,
       lastCompletedDate: today,
+      lastQuestCompletionDate: today,
       streakDays: nextStreak,
       dailyPackCompleted: state.dailyPackCompleted,
       dailyPackItems: state.dailyPackItems,
@@ -113,6 +144,7 @@ export const useRitualStore = create<RitualState>((set, get) => ({
       completedNumbers: state.completedNumbers,
       questDay: state.questDay,
       lastCompletedDate: allFinished ? today : state.lastCompletedDate,
+      lastQuestCompletionDate: state.lastQuestCompletionDate,
       streakDays: nextStreak,
       dailyPackCompleted: allFinished,
       dailyPackItems: updatedItems,
@@ -131,6 +163,7 @@ export const useRitualStore = create<RitualState>((set, get) => ({
       completedNumbers: state.completedNumbers,
       questDay: state.questDay,
       lastCompletedDate: today,
+      lastQuestCompletionDate: state.lastQuestCompletionDate,
       streakDays: nextStreak,
       dailyPackCompleted: true,
       dailyPackItems: { morning: true, midday: true, evening: true },
