@@ -27,7 +27,6 @@ export default function BlueprintResultScreen() {
       })
     : null;
 
-  const firstName = profile?.fullName?.trim().split(' ')[0] || 'Seeker';
   const fullName = profile?.fullName?.trim() || 'Seeker';
   const birthDate = (profile as any)?.dob || (profile as any)?.birthDate || '2000-01-01';
 
@@ -281,14 +280,17 @@ export default function BlueprintResultScreen() {
         {/* Payoff & Matrix Transition (Reveals ONLY when all 3 are explored) */}
         {allExplored && (
           <>
-            <Card style={styles.darkCard}>
-              <Txt variant="label" color="textMuted" style={{ color: '#A5B4FC' }}>
-                10-SECOND BLUEPRINT • {firstName} ✨
+            <Card style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.primary }}>
+              <Txt variant="label" color="textMuted">
+                SUMMARY
               </Txt>
-              <Txt variant="body" style={{ color: '#FFFFFF', marginTop: spacing.xs, lineHeight: 22 }}>
-                You lead with <Txt variant="body" style={{ color: '#FCD34D', fontWeight: '700' }}>{lifePathInfo.archetype || lifePathInfo.title}</Txt> wisdom (Life Path {lp}) and are driven by <Txt variant="body" style={{ color: '#FCD34D', fontWeight: '700' }}>{soulUrgeInfo.archetype || soulUrgeInfo.title}</Txt> yearning (Soul Urge {su}).
+              <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.xs, lineHeight: 18 }}>
+                Your core numbers offer different perspectives on your personality, strengths, motivations, and natural tendencies. Together, they form a personal numerology blueprint based on your name and date of birth.
               </Txt>
-              <Txt variant="caption" style={{ color: '#C7D2FE', marginTop: spacing.xs }}>
+              <Txt variant="body" style={{ marginTop: spacing.sm, lineHeight: 22 }}>
+                You lead with <Txt variant="body" color="primary" style={{ fontWeight: '700' }}>{lifePathInfo.archetype || lifePathInfo.title}</Txt> wisdom (Life Path {lp}) and are driven by <Txt variant="body" color="primary" style={{ fontWeight: '700' }}>{soulUrgeInfo.archetype || soulUrgeInfo.title}</Txt> yearning (Soul Urge {su}).
+              </Txt>
+              <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.xs }}>
                 {destinyInfo.title}: Guided toward authentic self-mastery.
               </Txt>
             </Card>

@@ -104,13 +104,6 @@ export default function SwotAuditScreen() {
           <Txt variant="heading">Your Personal SWOT</Txt>
         </View>
 
-        {/* Synthesis Summary */}
-        <Card style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.primary }}>
-          <Txt variant="body" style={{ lineHeight: 22 }}>
-            💡 <Txt variant="body" style={{ fontWeight: '700' }}>SUMMARY:</Txt> You carry the soul blueprint of {lpInfo.archetype}. Your greatest growth area lies in harmonizing the energy gaps left by your missing numbers ({missingDigits.join(', ')}).
-          </Txt>
-        </Card>
-
         {/* Progress Tracker Banner */}
         <Card style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', gap: spacing.xs }}>
           <View style={styles.rowBetween}>
@@ -303,6 +296,15 @@ export default function SwotAuditScreen() {
             </View>
           )}
         </Card>
+
+        {/* Synthesis Summary (only once all 4 sections are explored) */}
+        {allExplored && (
+          <Card style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.primary }}>
+            <Txt variant="body" style={{ lineHeight: 22 }}>
+              💡 <Txt variant="body" style={{ fontWeight: '700' }}>SUMMARY:</Txt> You carry the soul blueprint of {lpInfo.archetype}. Your greatest growth area lies in harmonizing the energy gaps left by your missing numbers ({missingDigits.join(', ')}).
+            </Txt>
+          </Card>
+        )}
 
         {/* Paywall Bridge (Unlocks ONLY when all 4 are explored) */}
         {allExplored && (

@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 
@@ -67,6 +68,7 @@ export default function DetailsEntryScreen() {
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleGenerate = async () => {
     if (!fullName.trim()) {
@@ -99,7 +101,7 @@ export default function DetailsEntryScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 28 + insets.bottom }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

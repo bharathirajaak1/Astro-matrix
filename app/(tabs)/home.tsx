@@ -64,12 +64,20 @@ export default function HomeScreen() {
         <Txt variant="caption" color="textMuted">
           {remediesUnlocked ? 'AstroMatrix Plus' : 'Free Compass'}
         </Txt>
+        <View style={{ gap: 2, marginTop: spacing.xs }}>
+          <Txt variant="caption" color="textMuted">
+            {profile.fullName}
+          </Txt>
+          <Txt variant="caption" color="textMuted">
+            Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
+          </Txt>
+        </View>
       </View>
 
       <SectionHeader title="Core Numbers" subtitle="Your blueprint at a glance" />
       <Card>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View style={{ alignItems: 'center', gap: spacing.xs }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md }}>
+          <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
             <Txt variant="title" color="primary">
               {report.lifePath}
             </Txt>
@@ -77,7 +85,15 @@ export default function HomeScreen() {
               Life Path
             </Txt>
           </View>
-          <View style={{ alignItems: 'center', gap: spacing.xs }}>
+          <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
+            <Txt variant="title" color="primary">
+              {report.birthday}
+            </Txt>
+            <Txt variant="caption" color="textMuted">
+              Birth Number
+            </Txt>
+          </View>
+          <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
             <Txt variant="title" color="primary">
               {report.destiny}
             </Txt>
@@ -85,7 +101,7 @@ export default function HomeScreen() {
               Destiny
             </Txt>
           </View>
-          <View style={{ alignItems: 'center', gap: spacing.xs }}>
+          <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
             <Txt variant="title" color="primary">
               {report.soulUrge}
             </Txt>
@@ -93,7 +109,7 @@ export default function HomeScreen() {
               Soul Urge
             </Txt>
           </View>
-          <View style={{ alignItems: 'center', gap: spacing.xs }}>
+          <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
             <Txt variant="title" color="primary">
               {report.personality}
             </Txt>

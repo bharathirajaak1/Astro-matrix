@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   icon: {
-    fontSize: 46,
+    fontSize: 68,
+    lineHeight: 78,
     marginBottom: 12,
   },
   title: {

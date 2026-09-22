@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
-import { NUMBER_TRAITS } from '@/core/archetypes';
 import { buildLoShuGrid } from '@/core/loShu';
 import { Screen, Txt, Card, Button } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
@@ -160,14 +159,9 @@ export default function LoShuRevealScreen() {
 
           {expanded.strengths && (
             <View style={styles.accordionBody}>
-              {activeDigits.map((digit) => {
-                const trait = NUMBER_TRAITS[digit];
-                return (
-                  <Txt key={digit} variant="body" style={{ color: '#14532D', fontSize: 13, lineHeight: 19 }}>
-                    • <Txt variant="body" style={{ fontWeight: '700', color: '#14532D' }}>Number {digit} ({counts[digit]}x):</Txt> {trait?.activeTrait || 'Balanced energetic presence.'}
-                  </Txt>
-                );
-              })}
+              <Txt variant="body" style={{ color: '#14532D', fontSize: 13, lineHeight: 19 }}>
+                Numbers {activeDigits.length > 0 ? activeDigits.join(', ') : 'none'} are active in your chart. Your Personal SWOT has the full breakdown of what each one means.
+              </Txt>
 
               {!explored.strengths && (
                 <TouchableOpacity
@@ -200,14 +194,9 @@ export default function LoShuRevealScreen() {
 
           {expanded.blockages && (
             <View style={styles.accordionBody}>
-              {missingDigits.map((digit) => {
-                const trait = NUMBER_TRAITS[digit];
-                return (
-                  <Txt key={digit} variant="body" style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 19 }}>
-                    • <Txt variant="body" style={{ fontWeight: '700', color: '#7F1D1D' }}>Number {digit} (Missing):</Txt> {trait?.missingImpact || 'Latent potential waiting to be harmonized.'}
-                  </Txt>
-                );
-              })}
+              <Txt variant="body" style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 19 }}>
+                Numbers {missingDigits.length > 0 ? missingDigits.join(', ') : 'none'} are missing from your chart. Your Personal SWOT has the full breakdown of what each one means.
+              </Txt>
 
               {!explored.blockages && (
                 <TouchableOpacity
