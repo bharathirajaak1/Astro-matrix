@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { buildLoShuGrid } from '@/core/loShu';
@@ -58,6 +58,7 @@ const PLANES: readonly PlaneInfo[] = [
 
 export default function BlueprintScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const profile = useProfileStore((s) => s.profile);
 
   const report = useMemo(
@@ -217,6 +218,50 @@ export default function BlueprintScreen() {
           </Card>
         );
       })}
+
+      <SectionHeader title="Explore Further" subtitle="Dive deeper into your blueprint" />
+      <Card onPress={() => router.push('/(tabs)/numerology')} accessibilityLabel="Open Numbers">
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt variant="heading">Numbers</Txt>
+            <Txt variant="caption" color="textMuted">
+              Full core numerology details
+            </Txt>
+          </View>
+          <Txt variant="caption" color="primary">
+            View →
+          </Txt>
+        </View>
+      </Card>
+      <Card onPress={() => router.push('/(tabs)/grid')} accessibilityLabel="Open Lo Shu grid">
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt variant="heading">Lo Shu / Sacred Matrix</Txt>
+            <Txt variant="caption" color="textMuted">
+              Full grid detail view
+            </Txt>
+          </View>
+          <Txt variant="caption" color="primary">
+            View →
+          </Txt>
+        </View>
+      </Card>
+      <Card
+        onPress={() => router.push('/onboarding/swot-audit?context=blueprint')}
+        accessibilityLabel="Open Personal SWOT"
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt variant="heading">Personal SWOT</Txt>
+            <Txt variant="caption" color="textMuted">
+              Your energetic audit
+            </Txt>
+          </View>
+          <Txt variant="caption" color="primary">
+            View →
+          </Txt>
+        </View>
+      </Card>
     </Screen>
   );
 }

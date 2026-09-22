@@ -1,6 +1,6 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { buildNumerologyReport } from '@/core/numerology';
 import type { NumerologyReport } from '@/core/types';
@@ -28,6 +28,7 @@ function trailText(report: NumerologyReport, key: CoreKey): string {
 }
 
 export default function NumerologyScreen() {
+  const router = useRouter();
   const profile = useProfileStore((s) => s.profile);
   const report = useMemo(
     () => (profile ? buildNumerologyReport(profile) : null),
@@ -47,6 +48,15 @@ const greeting = getTimeOfDayGreeting(profile.fullName);
   return (
     <Screen>
       <View style={{ gap: spacing.xs, marginBottom: spacing.sm }}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/blueprint')}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Txt variant="label" color="primary" style={{ fontWeight: '700' }}>
+            ← Back
+          </Txt>
+        </TouchableOpacity>
         <Txt variant="title">{profile.fullName}</Txt>
         <Txt variant="caption" color="textMuted">
           Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system

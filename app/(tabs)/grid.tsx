@@ -116,10 +116,17 @@ export default function LoShuScreen() {
   const loShuSummary = generateLoShuSummary(profile?.dob || '');
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Top Header */}
         <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.replace('/(tabs)/blueprint')}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Text style={styles.backLink}>← Back</Text>
+          </TouchableOpacity>
           <Text style={styles.headerSub}>CHINESE SACRED MATRIX</Text>
          <Text style={styles.headerMeta}>
             DOB: {profile?.dob || profile?.birthDate || '1970-09-20'} • {profile?.fullName || profile?.name || 'User'}
@@ -218,6 +225,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FAF8F5' },
   container: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 18 },
+  backLink: { fontSize: 14, fontWeight: '700', color: '#6C4CE0', marginBottom: 8 },
   headerSub: { fontSize: 11, fontWeight: '800', color: '#A8A29E', letterSpacing: 1 },
   headerTitle: { fontSize: 26, fontWeight: '800', color: '#1C1917', marginTop: 4 },
   headerMeta: { fontSize: 13, color: '#78716C', marginTop: 4 },

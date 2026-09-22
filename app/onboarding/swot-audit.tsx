@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
@@ -14,6 +14,8 @@ const GRID_ORDER = [4, 9, 2, 3, 5, 7, 8, 1, 6];
 export default function SwotAuditScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const params = useLocalSearchParams<{ context?: string }>();
+  const isBlueprintContext = params.context === 'blueprint';
   const profile = useProfileStore((s) => s.profile);
 
   const dob = (profile as any)?.dob || (profile as any)?.birthDate || '2000-01-01';
@@ -98,10 +100,12 @@ export default function SwotAuditScreen() {
               </Txt>
             </TouchableOpacity>
             <Txt variant="label" color="textMuted">
-              STEP 3 OF 3: ENERGETIC AUDIT
+              {isBlueprintContext ? 'PERSONAL ENERGY AUDIT' : 'STEP 3 OF 3: ENERGETIC AUDIT'}
             </Txt>
           </View>
-          <Txt variant="heading">Your Personal SWOT</Txt>
+          <Txt variant="heading" style={{ textAlign: 'left' }}>
+            Your Personal SWOT
+          </Txt>
         </View>
 
         {/* Progress Tracker Banner */}
@@ -330,7 +334,7 @@ export default function SwotAuditScreen() {
             </View>
 
             <TouchableOpacity
-              onPress={() => router.replace('/(tabs)/forecast')}
+              onPress={() => router.replace('/(tabs)/home')}
               style={{ paddingVertical: 12, alignItems: 'center' }}
             >
               <Txt variant="caption" style={{ color: '#94A3B8' }}>

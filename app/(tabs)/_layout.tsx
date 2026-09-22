@@ -41,16 +41,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="numerology"
+        name="blueprint"
         options={{
-          title: 'Numbers',
-          tabBarIcon: ({ color, size }) => <FontAwesome name="star" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="grid"
-        options={{
-          title: 'Lo Shu',
+          title: 'Blueprint',
           tabBarIcon: ({ color, size }) => <FontAwesome name="th" size={size} color={color} />,
         }}
       />
@@ -67,6 +60,14 @@ export default function TabsLayout() {
           title: 'Remedies',
           tabBarIcon: ({ color, size }) => <FontAwesome name="lock" size={size} color={color} />,
         }}
+      />
+      <Tabs.Screen
+        name="numerology"
+        options={{ href: null, title: 'Numerology' }}
+      />
+      <Tabs.Screen
+        name="grid"
+        options={{ href: null, title: 'Grid' }}
       />
     </Tabs>
   );
