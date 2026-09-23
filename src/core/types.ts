@@ -24,7 +24,6 @@ export interface Profile {
   system: NumerologySystem;
   /** ISO timestamp the profile was created. */
   createdAt: string;
-  blueprintCalculated?: boolean;
 }
 
 export interface NumerologyReport {

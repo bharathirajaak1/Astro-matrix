@@ -89,8 +89,6 @@ export default function DetailsEntryScreen() {
       system,
     } as any);
 
-    useProfileStore.getState().updateFlags({ blueprintCalculated: true });
-
     router.push('/onboarding/blueprint-result' as any);
   };
 
