@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'expo-router';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildLoShuGrid } from '@/core/loShu';
 import { Screen, Txt, Card, Button } from '@/ui/components';
@@ -19,36 +18,6 @@ export default function LoShuRevealScreen() {
 
   const activeDigits = GRID_ORDER.filter((d) => (counts[d] || 0) > 0);
   const missingDigits = GRID_ORDER.filter((d) => !counts[d] || counts[d] === 0);
-
-  const [expanded, setExpanded] = useState({
-    strengths: false,
-    blockages: false,
-  });
-
-  const [explored, setExplored] = useState({
-    strengths: false,
-    blockages: false,
-  });
-
-  const toggleSection = (key: 'strengths' | 'blockages') => {
-    void Haptics.selectionAsync();
-    setExpanded((prev) => {
-      const next = !prev[key];
-      if (next) {
-        setExplored((e) => ({ ...e, [key]: true }));
-      }
-      return { ...prev, [key]: next };
-    });
-  };
-
-  const markExplored = (key: 'strengths' | 'blockages') => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setExplored((prev) => ({ ...prev, [key]: true }));
-    setExpanded((prev) => ({ ...prev, [key]: false }));
-  };
-
-  const exploredCount = [explored.strengths, explored.blockages].filter(Boolean).length;
-  const allExplored = explored.strengths && explored.blockages;
 
   return (
     <Screen>
@@ -125,110 +94,36 @@ export default function LoShuRevealScreen() {
           </View>
         </Card>
 
-        {/* Interactive Exploration Prompt */}
+        {/* Energy Balance */}
         <Card style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', gap: spacing.xs }}>
-          <View style={styles.badgeRow}>
-            <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800' }}>
-              ENERGY BALANCE
-            </Txt>
-            <View style={styles.pillBadge}>
-              <Txt variant="caption" style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11 }}>
-                {exploredCount} of 2 explored
-              </Txt>
-            </View>
-          </View>
+          <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800' }}>
+            ENERGY BALANCE
+          </Txt>
           <Txt variant="body" style={{ color: '#4338CA', fontSize: 13, lineHeight: 18 }}>
-            Active: {activeDigits.length} | Missing: {missingDigits.length}. Tap below to uncover your natural strengths and energetic blockages.
+            Active: {activeDigits.length} | Missing: {missingDigits.length}
           </Txt>
         </Card>
 
-        {/* Collapsible Section 1: Natural Strengths */}
-        <Card style={styles.cardStrengths}>
-          <TouchableOpacity
-            style={styles.accordionHeader}
-            activeOpacity={0.7}
-            onPress={() => toggleSection('strengths')}
-          >
-            <Txt variant="heading" style={{ color: '#166534', fontSize: 15, flex: 1 }}>
-              {expanded.strengths ? '▲' : '▼'} ✅ YOUR NATURAL STRENGTHS ({activeDigits.length})
+        {/* Concise interpretation */}
+        <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 19 }}>
+          Your Sacred Matrix shows {activeDigits.length} active energy patterns and {missingDigits.length} areas to explore.
+        </Txt>
+
+        {/* Insight & Next Step CTA */}
+        <View style={{ gap: spacing.md }}>
+          <Card style={styles.insightCard}>
+            <Txt variant="body" style={{ color: '#854D0E', fontSize: 13, lineHeight: 20 }}>
+              💡 <Txt variant="body" style={{ fontWeight: '700', color: '#713F12' }}>INSIGHT:</Txt> Your missing numbers pinpoint exactly where life feels recurrently exhausting. But missing numbers are not permanent deficits—they are dormant codes waiting to be balanced.
             </Txt>
-            {explored.strengths && (
-              <Txt variant="body" style={{ color: '#16A34A', fontWeight: '800' }}>✓</Txt>
-            )}
-          </TouchableOpacity>
+          </Card>
 
-          {expanded.strengths && (
-            <View style={styles.accordionBody}>
-              <Txt variant="body" style={{ color: '#14532D', fontSize: 13, lineHeight: 19 }}>
-                Numbers {activeDigits.length > 0 ? activeDigits.join(', ') : 'none'} are active in your chart. Your Personal SWOT has the full breakdown of what each one means.
-              </Txt>
-
-              {!explored.strengths && (
-                <TouchableOpacity
-                  style={styles.readButtonGreen}
-                  onPress={() => markExplored('strengths')}
-                >
-                  <Txt variant="caption" style={{ color: '#166534', fontWeight: '700' }}>
-                    ✅ I've explored my strengths
-                  </Txt>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </Card>
-
-        {/* Collapsible Section 2: Energy Blockages */}
-        <Card style={styles.cardBlockages}>
-          <TouchableOpacity
-            style={styles.accordionHeader}
-            activeOpacity={0.7}
-            onPress={() => toggleSection('blockages')}
-          >
-            <Txt variant="heading" style={{ color: '#991B1B', fontSize: 15, flex: 1 }}>
-              {expanded.blockages ? '▲' : '▼'} ⚠️ YOUR ENERGY BLOCKAGES ({missingDigits.length})
-            </Txt>
-            {explored.blockages && (
-              <Txt variant="body" style={{ color: '#DC2626', fontWeight: '800' }}>✓</Txt>
-            )}
-          </TouchableOpacity>
-
-          {expanded.blockages && (
-            <View style={styles.accordionBody}>
-              <Txt variant="body" style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 19 }}>
-                Numbers {missingDigits.length > 0 ? missingDigits.join(', ') : 'none'} are missing from your chart. Your Personal SWOT has the full breakdown of what each one means.
-              </Txt>
-
-              {!explored.blockages && (
-                <TouchableOpacity
-                  style={styles.readButtonRed}
-                  onPress={() => markExplored('blockages')}
-                >
-                  <Txt variant="caption" style={{ color: '#991B1B', fontWeight: '700' }}>
-                    ✅ I've explored my blockages
-                  </Txt>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </Card>
-
-        {/* Insight Payoff & Next Step CTA (Appears ONLY when both are explored) */}
-        {allExplored && (
-          <View style={{ gap: spacing.md }}>
-            <Card style={styles.insightCard}>
-              <Txt variant="body" style={{ color: '#854D0E', fontSize: 13, lineHeight: 20 }}>
-                💡 <Txt variant="body" style={{ fontWeight: '700', color: '#713F12' }}>INSIGHT:</Txt> Your missing numbers pinpoint exactly where life feels recurrently exhausting. But missing numbers are not permanent deficits—they are dormant codes waiting to be balanced.
-              </Txt>
-            </Card>
-
-            <View style={{ marginTop: spacing.xs }}>
-              <Button
-                label="View Complete Energetic Audit (SWOT) →"
-                onPress={() => router.push('/onboarding/swot-audit')}
-              />
-            </View>
+          <View style={{ marginTop: spacing.xs }}>
+            <Button
+              label="View Complete Energetic Audit (SWOT) →"
+              onPress={() => router.push('/onboarding/swot-audit')}
+            />
           </View>
-        )}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -277,54 +172,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pillBadge: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  cardStrengths: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    padding: 16,
-  },
-  cardBlockages: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    padding: 16,
-  },
-  accordionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  accordionBody: {
-    paddingTop: 12,
-    gap: 8,
-  },
-  readButtonGreen: {
-    backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  readButtonRed: {
-    backgroundColor: '#FEE2E2',
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 6,
   },
   insightCard: {
     backgroundColor: '#FEFCE8',
