@@ -55,12 +55,12 @@ interface PlaneDefinition {
 }
 
 const LO_SHU_PLANES: PlaneDefinition[] = [
-  { name: 'Willpower Plane', numbers: [9, 5, 1], strengthText: 'exceptional willpower' },
-  { name: 'Thought Plane', numbers: [4, 9, 2], strengthText: 'razor-sharp intellect and strategy' },
-  { name: 'Action Plane', numbers: [8, 1, 6], strengthText: 'dynamic physical execution' },
-  { name: 'Emotional Plane', numbers: [3, 5, 7], strengthText: 'deep emotional resilience' },
-  { name: 'Planning Plane', numbers: [4, 3, 8], strengthText: 'visionary long-term foresight' },
-  { name: 'Practical Plane', numbers: [2, 7, 6], strengthText: 'tangible grounding and manifestation' },
+  { name: 'Drive & Persistence', numbers: [9, 5, 1], strengthText: 'exceptional willpower' },
+  { name: 'Mind & Logic', numbers: [4, 9, 2], strengthText: 'razor-sharp intellect and strategy' },
+  { name: 'Action & Grounding', numbers: [8, 1, 6], strengthText: 'dynamic physical execution' },
+  { name: 'Heart & Intuition', numbers: [3, 5, 7], strengthText: 'deep emotional resilience' },
+  { name: 'Vision & Planning', numbers: [4, 3, 8], strengthText: 'visionary long-term foresight' },
+  { name: 'Manifestation', numbers: [2, 7, 6], strengthText: 'tangible grounding and manifestation' },
 ];
 
 const MISSING_GROWTH_AREAS: Record<number, string> = {
