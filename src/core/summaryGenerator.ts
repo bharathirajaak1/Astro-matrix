@@ -1,3 +1,5 @@
+import { buildLoShuGrid } from './loShu';
+
 // Time-of-day contextual greeting
 export const getTimeOfDayGreeting = (name?: string): string => {
   const hour = new Date().getHours();
@@ -74,11 +76,7 @@ const MISSING_GROWTH_AREAS: Record<number, string> = {
 };
 
 export const generateLoShuSummary = (dob: string): string => {
-  const digits = (dob || '').replace(/\D/g, '').split('').map(Number);
-  const digitCounts = digits.reduce<Record<number, number>>((acc, num) => {
-    if (num >= 1 && num <= 9) acc[num] = (acc[num] || 0) + 1;
-    return acc;
-  }, {});
+  const digitCounts: Record<number, number> = dob ? buildLoShuGrid(dob).counts : {};
 
   // 1. Determine most active plane
   let bestPlane = LO_SHU_PLANES[0];
