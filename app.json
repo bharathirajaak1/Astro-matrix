@@ -48,7 +48,6 @@
         }
       ],
       "expo-font",
-      "expo-sqlite",
       "expo-status-bar"
     ],
     "extra": {
