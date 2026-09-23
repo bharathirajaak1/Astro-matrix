@@ -6,10 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useEntitlement } from '@/features/entitlements';
 import { useNotificationsStore } from '@/features/notifications';
-import {
-  configureNotifications,
-  scheduleDailyNotifications,
-} from '@/features/notifications/notifications';
+import { configureNotifications } from '@/features/notifications/notifications';
 import { useThemePreferenceStore } from '@/features/preferences';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
@@ -40,7 +37,6 @@ export default function RootLayout() {
     void (async () => {
       await hydrateProfile();
       const currentProfile = useProfileStore.getState().profile;
-      void scheduleDailyNotifications(currentProfile?.fullName);
 
       await Promise.all([
         hydrateNotifications(currentProfile),

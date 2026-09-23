@@ -2,6 +2,8 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import type * as ExpoNotifications from 'expo-notifications';
 
+import type { ReminderContent } from './content';
+
 export const isExpoGo =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
@@ -12,6 +14,24 @@ try {
   }
 } catch {
   Notifications = null;
+}
+
+/**
+ * Stable identifier for the single daily forecast reminder. Scheduling and
+ * cancellation are always targeted at this identifier so this feature never
+ * touches any other notification that might be scheduled elsewhere.
+ */
+export const DAILY_FORECAST_REMINDER_ID = 'daily-forecast-reminder';
+
+export const REMINDER_HOUR = 8;
+export const REMINDER_MINUTE = 0;
+
+export type PermissionState = 'granted' | 'denied' | 'undetermined';
+
+function toPermissionState(status?: string): PermissionState {
+  if (status === 'granted') return 'granted';
+  if (status === 'denied') return 'denied';
+  return 'undetermined';
 }
 
 export async function configureNotifications(): Promise<void> {
@@ -43,63 +63,85 @@ export async function configureNotifications(): Promise<void> {
   }
 }
 
-export async function scheduleDailyNotifications(userName?: string): Promise<void> {
+/** Query the current OS notification permission without prompting the user. */
+export async function getPermissionState(): Promise<PermissionState> {
+  if (!Notifications) {
+    return 'undetermined';
+  }
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return toPermissionState(status);
+  } catch {
+    return 'undetermined';
+  }
+}
+
+/**
+ * Prompt the user for notification permission. Callers must only invoke this
+ * in direct response to the user opting in (e.g. the Settings reminder
+ * toggle) - never automatically on launch.
+ */
+export async function requestPermission(): Promise<PermissionState> {
+  if (!Notifications) {
+    return 'undetermined';
+  }
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    return toPermissionState(status);
+  } catch {
+    return 'undetermined';
+  }
+}
+
+/**
+ * Cancel only the daily forecast reminder, by its stable identifier. Never
+ * touches any other scheduled notification.
+ */
+export async function cancelDailyForecastReminder(): Promise<void> {
   if (!Notifications) {
     return;
   }
+  try {
+    await Notifications.cancelScheduledNotificationAsync(DAILY_FORECAST_REMINDER_ID);
+  } catch {
+    // Nothing scheduled under this identifier - nothing to do.
+  }
+}
+
+/**
+ * Schedule the single daily forecast reminder at 8:00 AM local time, daily
+ * repeating, from already-built content (see `content.ts` - this function
+ * never calculates a forecast itself). Any existing instance is cancelled by
+ * identifier first, so calling this repeatedly never produces duplicates.
+ *
+ * Resolves `true` only if the notification was actually scheduled, and
+ * `false` if scheduling was unavailable (Expo Go) or failed - it never
+ * throws, so callers can safely `await` it without a try/catch.
+ */
+export async function scheduleDailyForecastReminder(content: ReminderContent): Promise<boolean> {
+  if (!Notifications) {
+    return false;
+  }
+
+  await cancelDailyForecastReminder();
 
   try {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      return;
-    }
-
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    const morningTitle = userName ? `🌅 Good morning, ${userName}` : '🌅 Good Morning!';
-
     await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_FORECAST_REMINDER_ID,
       content: {
-        title: morningTitle,
-        body: 'Your free daily forecast & power color are ready. Align your frequency for today.',
-        data: { type: 'morning', target: '/(tabs)/forecast' },
+        title: content.title,
+        body: content.body,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 8,
-        minute: 0,
+        hour: REMINDER_HOUR,
+        minute: REMINDER_MINUTE,
         ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
       },
     });
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '☀️ Golden Hour Approaching',
-        body: 'Your midday alignment window opens soon. Take 2 minutes for your micro-ritual.',
-        data: { type: 'midday', target: '/(tabs)/forecast' },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 13,
-        minute: 30,
-        ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
-      },
-    });
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '🌙 Evening Wind-Down',
-        body: 'Time for your evening reflection. Review your day’s energetic flow.',
-        data: { type: 'evening', target: '/(tabs)/remedies' },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 21,
-        minute: 0,
-        ...(Platform.OS === 'android' ? { channelId: 'daily-forecast' } : {}),
-      },
-    });
+    return true;
   } catch (error) {
-    console.warn('Could not schedule notifications:', error);
+    console.warn('Could not schedule the daily forecast reminder:', error);
+    return false;
   }
 }

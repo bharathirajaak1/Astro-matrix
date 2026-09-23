@@ -1,17 +1,33 @@
 ﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Switch, TouchableOpacity, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useNotificationsStore } from '@/features/notifications';
+import { useProfileStore } from '@/features/profile/store';
 
 export default function SettingsScreen() {
-  const [morningNotif, setMorningNotif] = useState(true);
-  const [goldenNotif, setGoldenNotif] = useState(true);
-  const [eveningNotif, setEveningNotif] = useState(true);
+  const profile = useProfileStore((s) => s.profile);
+  const reminderEnabled = useNotificationsStore((s) => s.enabled);
+  const reminderPermission = useNotificationsStore((s) => s.permission);
+  const reminderHydrated = useNotificationsStore((s) => s.hydrated);
+  const setReminderEnabled = useNotificationsStore((s) => s.setEnabled);
+  const [togglingReminder, setTogglingReminder] = useState(false);
+
   const [traditionalRem, setTraditionalRem] = useState(true);
   const [modernRem, setModernRem] = useState(true);
 
   const toggleSwitch = (setter: React.Dispatch<React.SetStateAction<boolean>>, val: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setter(!val);
+  };
+
+  const handleToggleReminder = async (next: boolean) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setTogglingReminder(true);
+    try {
+      await setReminderEnabled(next, profile);
+    } finally {
+      setTogglingReminder(false);
+    }
   };
 
   return (
@@ -24,39 +40,21 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.settingRow}>
             <View style={styles.textBox}>
-              <Text style={styles.rowHintTitle}>Morning Alignment (8:00 AM)</Text>
-              <Text style={styles.rowSubtitle}>Receive today’s power color and theme</Text>
+              <Text style={styles.rowHintTitle}>Daily Forecast Reminder</Text>
+              <Text style={styles.rowSubtitle}>Get your personalized daily forecast at 8:00 AM.</Text>
             </View>
             <Switch
-              value={morningNotif}
-              onValueChange={() => toggleSwitch(setMorningNotif, morningNotif)}
+              value={reminderEnabled}
+              onValueChange={handleToggleReminder}
+              disabled={!reminderHydrated || togglingReminder}
               trackColor={{ false: '#DEEDEE', true: '#5E7563' }}
             />
           </View>
-
-          <View style={styles.settingRow}>
-            <View style={styles.textBox}>
-              <Text style={styles.rowHintTitle}>Golden Hour Alert (1:30 PM)</Text>
-              <Text style={styles.rowSubtitle}>Get ready for your focused window</Text>
-            </View>
-            <Switch
-              value={goldenNotif}
-              onValueChange={() => toggleSwitch(setGoldenNotif, goldenNotif)}
-              trackColor={{ false: '#DEEDEE', true: '#5E7563' }}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <View style={styles.textBox}>
-              <Text style={styles.rowHintTitle}>Evening Check-in (9:00 PM)</Text>
-              <Text style={styles.rowSubtitle}>Check off today’s quest and keep streak</Text>
-            </View>
-            <Switch
-              value={eveningNotif}
-              onValueChange={() => toggleSwitch(setEveningNotif, eveningNotif)}
-              trackColor={{ false: '#DEEDEE', true: '#5E7563' }}
-            />
-          </View>
+          {reminderPermission === 'denied' && (
+            <Text style={styles.permissionHint}>
+              Notifications are disabled. Enable notification permission in your device settings to receive the daily forecast.
+            </Text>
+          )}
         </View>
 
         <Text style={styles.sectionLabel}>REMEDY PREFERENCES</Text>
@@ -118,6 +116,7 @@ const styles = StyleSheet.create({
   textBox: { flex: 1, paddingRight: 12 },
   rowHintTitle: { fontSize: 14, fontWeight: '600', color: '#2C2523' },
   rowSubtitle: { fontSize: 11, color: '#7C736C', marginTop: 2, lineHeight: 16 },
+  permissionHint: { fontSize: 11, color: '#8C7A5C', marginTop: 10, lineHeight: 16 },
   upgradeButton: { backgroundColor: '#5E7563', borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   upgradeButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   disclaimerBox: { backgroundColor: '#F4F1F0', borderRadius: 12, padding: 14, marginTop: 8 },
