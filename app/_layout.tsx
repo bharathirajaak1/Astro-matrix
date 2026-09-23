@@ -83,7 +83,6 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="splash" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/disclaimer" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/system-choice" options={{ headerShown: false }} />
@@ -91,8 +90,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding/blueprint-result" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/loshu-reveal" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/swot-audit" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding/swot" options={{ headerShown: false }} />
-        
+
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', title: 'Settings' }} />
         <Stack.Screen
