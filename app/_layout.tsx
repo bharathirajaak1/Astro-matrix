@@ -14,7 +14,6 @@ import { useThemePreferenceStore } from '@/features/preferences';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
 import { useRitualStore } from '@/features/remedies/ritualStore';
-import { useAdStore } from '@/features/ads/adStore';
 
 // Suppress Expo Go push notification warning on Android development
 LogBox.ignoreLogs([
@@ -33,7 +32,6 @@ export default function RootLayout() {
 
   const hydrateEntitlement = useEntitlement((s) => s.hydrate);
   const hydrateThemePreference = useThemePreferenceStore((s) => s.hydrate);
-  const hydrateAds = useAdStore((s) => s.hydrate);
   const hydrateRituals = useRitualStore((s) => s.hydrate);
 
   // Load persisted state on launch
@@ -48,11 +46,10 @@ export default function RootLayout() {
         hydrateNotifications(currentProfile),
         hydrateEntitlement(),
         hydrateThemePreference(),
-        hydrateAds(),
         hydrateRituals(),
       ]);
     })();
-  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateAds, hydrateRituals]);
+  }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateRituals]);
 
   // Re-schedule whenever profile changes
   useEffect(() => {
@@ -94,8 +91,6 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', title: 'Settings' }} />
         <Stack.Screen name="paywall" options={{ presentation: 'modal', title: 'AstroMatrix Plus' }} />
-        <Stack.Screen name="remedy/[number]" options={{ title: 'Remedy' }} />
-        <Stack.Screen name="remedy/life-path" options={{ title: 'Life Path alignment' }} />
       </Stack>
     </SafeAreaProvider>
   );

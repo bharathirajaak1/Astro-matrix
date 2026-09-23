@@ -56,16 +56,6 @@ export const CORE_NUMBERS: {
   },
 ];
 
-/** Short gloss for each Lo Shu plane / arrow. */
-export const PLANE_MEANING: Record<string, string> = {
-  mind: 'Mental plane (4-9-2): planning and imagination.',
-  soul: 'Soul plane (3-5-7): feeling and freedom.',
-  practical: 'Practical plane (8-1-6): action in the material world.',
-  thought: 'Thought plane (4-3-8): ideas and memory.',
-  will: 'Will plane (9-5-1): determination and drive.',
-  action: 'Action plane (2-7-6): activity and expression.',
-};
-
 /** Copy for the forecast "focus" tag. */
 export const FOCUS_COPY: Record<string, { label: string; hint: string }> = {
   rest: { label: 'Rest', hint: 'Slow down and let things settle.' },
