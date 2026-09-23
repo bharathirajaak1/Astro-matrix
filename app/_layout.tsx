@@ -93,10 +93,6 @@ export default function RootLayout() {
 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal', title: 'Settings' }} />
-        <Stack.Screen
-          name="profile/edit"
-          options={{ presentation: 'modal', title: 'Your details' }}
-        />
         <Stack.Screen name="paywall" options={{ presentation: 'modal', title: 'AstroMatrix Plus' }} />
         <Stack.Screen name="remedy/[number]" options={{ title: 'Remedy' }} />
         <Stack.Screen name="remedy/life-path" options={{ title: 'Life Path alignment' }} />
