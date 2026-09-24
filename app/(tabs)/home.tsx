@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { buildForecast } from '@/core/forecast';
 import { buildLoShuGrid } from '@/core/loShu';
@@ -18,6 +19,7 @@ import { spacing } from '@/ui/theme';
  * new state of its own.
  */
 export default function HomeScreen() {
+  const router = useRouter();
   const profile = useProfileStore((s) => s.profile);
   const hydrated = useProfileStore((s) => s.hydrated);
 
@@ -131,7 +133,7 @@ export default function HomeScreen() {
       </Card>
 
       <SectionHeader title="Today's Guidance" subtitle={`Personal Day ${forecast.personalDay}`} />
-      <Card>
+      <Card onPress={() => router.push('/(tabs)/forecast')} accessibilityLabel="Open Forecast">
         <Txt variant="heading">{forecast.headline}</Txt>
         <Txt variant="body" color="textMuted">
           {forecast.body}
@@ -139,6 +141,7 @@ export default function HomeScreen() {
         <Txt variant="caption" color="textMuted">
           Lucky number: {forecast.luckyNumber}
         </Txt>
+        <Txt variant="caption" color="primary">View full forecast →</Txt>
       </Card>
 
       <SectionHeader title="Your Journey" subtitle="Ritual streak and quest progress" />
