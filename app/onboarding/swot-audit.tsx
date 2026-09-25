@@ -11,6 +11,19 @@ import { spacing, useTheme } from '@/ui/theme';
 
 const GRID_ORDER = [4, 9, 2, 3, 5, 7, 8, 1, 6];
 
+/** Join a list of phrases with commas and a trailing "and", e.g. "a, b, and c". */
+function joinWithAnd(items: string[]): string {
+  const filtered = items.filter(Boolean);
+  if (filtered.length === 0) return '';
+  if (filtered.length === 1) return filtered[0];
+  if (filtered.length === 2) return `${filtered[0]} and ${filtered[1]}`;
+  return `${filtered.slice(0, -1).join(', ')}, and ${filtered[filtered.length - 1]}`;
+}
+
+function lowerFirst(text: string): string {
+  return text ? text.charAt(0).toLowerCase() + text.slice(1) : text;
+}
+
 export default function SwotAuditScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -36,6 +49,26 @@ export default function SwotAuditScreen() {
 
   const lp = (report?.lifePath ?? 9) as number;
   const lpInfo = LIFE_PATH_ARCHETYPES[lp] || LIFE_PATH_ARCHETYPES[9];
+
+  // Same first-3 missing numbers already surfaced by the Opportunities
+  // section below, so the Summary and that section always agree.
+  const topMissing = missingDigits.slice(0, 3);
+
+  const summaryParagraph1 = `Your blueprint reflects the qualities of ${lpInfo.archetype} — Life Path ${lp}. Your active numbers add their own strengths to this pattern: ${joinWithAnd(
+    activeDigits.map((d) => `Number ${d} brings ${lowerFirst(NUMBER_TRAITS[d]?.activeTrait ?? '')}`),
+  )}.`;
+
+  const summaryParagraph2 = `${missingDigits.length} number${missingDigits.length === 1 ? '' : 's'} ${
+    missingDigits.length === 1 ? 'is' : 'are'
+  } missing from your chart, and each highlights a growth edge. ${topMissing
+    .map((d) => NUMBER_TRAITS[d]?.missingImpact)
+    .filter(Boolean)
+    .join('. ')}.`;
+
+  const summaryParagraph3 = `The opportunity is to work with these gaps through steady, practical steps: ${topMissing
+    .map((d) => NUMBER_TRAITS[d]?.unlockOpportunity)
+    .filter(Boolean)
+    .join('; ')}. Your strengths already point the way — use what comes naturally to you to build what your blueprint is asking for.`;
 
   const [expanded, setExpanded] = useState({
     strengths: false,
@@ -149,7 +182,7 @@ export default function SwotAuditScreen() {
             <View style={styles.accordionBody}>
               {activeDigits.map((d) => (
                 <Txt key={d} variant="body" style={{ color: '#14532D', fontSize: 13, lineHeight: 18 }}>
-                  • <Txt variant="body" style={{ fontWeight: '700', color: '#14532D' }}>Number {d} ({counts[d]}x):</Txt> {NUMBER_TRAITS[d]?.activeTrait}
+                  • <Txt variant="body" style={{ fontWeight: '700', color: '#14532D' }}>Number {d}:</Txt> {NUMBER_TRAITS[d]?.activeTrait}
                 </Txt>
               ))}
 
@@ -191,7 +224,7 @@ export default function SwotAuditScreen() {
             <View style={styles.accordionBody}>
               {missingDigits.map((d) => (
                 <Txt key={d} variant="body" style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 18 }}>
-                  • <Txt variant="body" style={{ fontWeight: '700', color: '#7F1D1D' }}>Number {d} (Missing):</Txt> {NUMBER_TRAITS[d]?.missingImpact}
+                  • <Txt variant="body" style={{ fontWeight: '700', color: '#7F1D1D' }}>Number {d}:</Txt> {NUMBER_TRAITS[d]?.missingImpact}
                 </Txt>
               ))}
 
@@ -305,8 +338,11 @@ export default function SwotAuditScreen() {
         {allExplored && (
           <Card style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.primary }}>
             <Txt variant="body" style={{ lineHeight: 22 }}>
-              💡 <Txt variant="body" style={{ fontWeight: '700' }}>SUMMARY:</Txt> You carry the soul blueprint of {lpInfo.archetype}. Your greatest growth area lies in harmonizing the energy gaps left by your missing numbers ({missingDigits.join(', ')}).
+              💡 <Txt variant="body" style={{ fontWeight: '700' }}>SUMMARY</Txt>
             </Txt>
+            <Txt variant="body" style={{ lineHeight: 22 }}>{summaryParagraph1}</Txt>
+            <Txt variant="body" style={{ lineHeight: 22 }}>{summaryParagraph2}</Txt>
+            <Txt variant="body" style={{ lineHeight: 22 }}>{summaryParagraph3}</Txt>
           </Card>
         )}
 
