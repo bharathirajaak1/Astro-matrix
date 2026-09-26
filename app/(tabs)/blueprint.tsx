@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { buildLoShuGrid } from '@/core/loShu';
 import { buildNumerologyReport } from '@/core/numerology';
+import { generateNumbersSummary, generateLoShuSummary } from '@/core/summaryGenerator';
 import type { NumerologyReport } from '@/core/types';
 import { CORE_NUMBERS, meaningFor } from '@/data/interpretations';
 import { useProfileStore } from '@/features/profile/store';
@@ -43,17 +44,54 @@ const GRID_ROWS: readonly (readonly number[])[] = [
 interface PlaneInfo {
   friendlyName: string;
   subtitle: string;
+  description: string;
   icon: string;
   numbers: readonly number[];
 }
 
 const PLANES: readonly PlaneInfo[] = [
-  { friendlyName: 'Mind & Logic', subtitle: 'Intellect & memory', icon: '🧠', numbers: [4, 9, 2] },
-  { friendlyName: 'Heart & Intuition', subtitle: 'Empathy & feelings', icon: '💖', numbers: [3, 5, 7] },
-  { friendlyName: 'Action & Grounding', subtitle: 'Execution & discipline', icon: '🌱', numbers: [8, 1, 6] },
-  { friendlyName: 'Vision & Planning', subtitle: 'Conception & strategy', icon: '🔭', numbers: [4, 3, 8] },
-  { friendlyName: 'Drive & Persistence', subtitle: 'Focus & resolve', icon: '⚡', numbers: [9, 5, 1] },
-  { friendlyName: 'Manifestation', subtitle: 'Decisive movement', icon: '🏃', numbers: [2, 7, 6] },
+  {
+    friendlyName: 'Mind & Logic',
+    subtitle: 'Intellect & memory',
+    description: 'Your analytical thinking, memory, and cognitive agility.',
+    icon: '🧠',
+    numbers: [4, 9, 2],
+  },
+  {
+    friendlyName: 'Heart & Intuition',
+    subtitle: 'Empathy & feelings',
+    description: 'Your empathy, spiritual attunement, feelings, and emotional resilience.',
+    icon: '💖',
+    numbers: [3, 5, 7],
+  },
+  {
+    friendlyName: 'Action & Grounding',
+    subtitle: 'Execution & discipline',
+    description: 'Your physical endurance, discipline, material mastery, and everyday habits.',
+    icon: '🌱',
+    numbers: [8, 1, 6],
+  },
+  {
+    friendlyName: 'Vision & Planning',
+    subtitle: 'Conception & strategy',
+    description: 'Your ability to conceive, plan, and structure ideas.',
+    icon: '🔭',
+    numbers: [4, 3, 8],
+  },
+  {
+    friendlyName: 'Drive & Persistence',
+    subtitle: 'Focus & resolve',
+    description: 'Your inner persistence, focus, and grit to complete objectives.',
+    icon: '⚡',
+    numbers: [9, 5, 1],
+  },
+  {
+    friendlyName: 'Manifestation',
+    subtitle: 'Decisive movement',
+    description: 'Your physical realization, decisive movement, and tangible execution.',
+    icon: '🏃',
+    numbers: [2, 7, 6],
+  },
 ];
 
 export default function BlueprintScreen() {
@@ -78,6 +116,13 @@ export default function BlueprintScreen() {
 
   const counts: Record<number, number> = loShu.counts;
 
+  const numbersSummary = generateNumbersSummary(
+    report.lifePath ?? 1,
+    report.soulUrge ?? report.destiny ?? 1,
+    report.soulUrge ? 'Soul Urge' : 'Destiny',
+  );
+  const loShuSummary = generateLoShuSummary(profile.dob);
+
   return (
     <Screen>
       <View style={{ gap: spacing.xs, marginBottom: spacing.sm }}>
@@ -86,6 +131,10 @@ export default function BlueprintScreen() {
           Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
         </Txt>
       </View>
+
+      <Txt variant="body" color="textMuted">
+        {numbersSummary}
+      </Txt>
 
       <SectionHeader title="Core Numbers" subtitle="Your blueprint, in detail" />
       {CORE_NUMBERS.map(({ key, title, blurb }) => {
@@ -166,6 +215,10 @@ export default function BlueprintScreen() {
         </View>
       </Card>
 
+      <Txt variant="body" color="textMuted">
+        {loShuSummary}
+      </Txt>
+
       <SectionHeader title="Planes of Expression" subtitle="Where your energy flows" />
       {PLANES.map((plane) => {
         const activeCount = plane.numbers.filter((num) => (counts[num] || 0) > 0).length;
@@ -198,6 +251,9 @@ export default function BlueprintScreen() {
                 {statusText}
               </Txt>
             </View>
+            <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.sm }}>
+              {plane.description}
+            </Txt>
             <View
               style={{
                 height: 6,
