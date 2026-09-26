@@ -48,7 +48,7 @@ export default function Paywall() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/numerology');
+      router.replace('/(tabs)/remedies');
     }
   };
 

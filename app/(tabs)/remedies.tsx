@@ -15,11 +15,15 @@ import {
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useProfileStore } from '@/features/profile/store';
+import { useEntitlement } from '@/features/entitlements';
+import { LockOverlay } from '@/ui/components';
 import { EXPANDED_REMEDIES } from '@/data/expandedRemedies';
 import { computeQuestHierarchy, generateDailyRitualPack } from '@/services/questEngine';
 
 export default function RemediesScreen() {
   const profile = useProfileStore((s: any) => s.profile);
+  const remediesUnlocked = useEntitlement((s) => s.remediesUnlocked);
+  const loading = useEntitlement((s) => s.loading);
 
   // Dynamically calculate blockages fro  m profile DOB
   const activeDob = profile?.dob || profile?.birthDate || '1995-02-18';
@@ -98,6 +102,330 @@ const [selectedTab, setSelectedTab] = useState<'quest' | 'dailyPack' | 'journey'
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert('Playing Affirmation 🔊', `"${activeRemedy.affirmation}"`);
   };
+
+  const questExperience = (
+    <>
+      {/* Tab Buttons */}
+        <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'quest' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('quest')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'quest' && styles.tabTextActive]}>
+            Active Quest
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'dailyPack' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('dailyPack')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'dailyPack' && styles.tabTextActive]}>
+            Daily Pack
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabButton, selectedTab === 'journey' && styles.tabButtonActive]}
+          onPress={() => setSelectedTab('journey')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'journey' && styles.tabTextActive]}>
+            Healing Journey
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* TAB 1: ACTIVE QUEST */}
+      {selectedTab === 'quest' && (
+        <View>
+          <View style={styles.questHeader}>
+            <View style={styles.priorityBadge}>
+              <Text style={styles.priorityText}>PRIORITY FOCUS: NUMBER {hierarchy.activeNumber}</Text>
+            </View>
+            {hierarchy.upcomingNumbers.length > 0 && (
+              <Text style={styles.upcomingNote}>
+                Queued next: {hierarchy.upcomingNumbers.map((n) => `Number ${n}`).join(', ')}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.questCard}>
+            <Text style={styles.questTitle}>{activeRemedy.microRitual.title}</Text>
+            <Text style={styles.questKeyword}>
+              Theme: {activeRemedy.keyword} • {activeRemedy.title}
+            </Text>
+
+            {/* Day 2 of 7 Quest Progress Bar */}
+            <View style={styles.questProgressContainer}>
+              <View style={styles.questProgressLabels}>
+                <Text style={styles.questDayLabel}>Progress</Text>
+                <Text style={styles.questDayCount}>Day {questDay} of 7</Text>
+              </View>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: `${(questDay / 7) * 100}%` }]} />
+              </View>
+            </View>
+
+            <View style={styles.ritualSection}>
+              <Text style={styles.sectionHeading}>1. What to Do</Text>
+              <Text style={styles.bodyText}>{activeRemedy.microRitual.whatToDo}</Text>
+            </View>
+
+            <View style={styles.ritualSection}>
+              <Text style={styles.sectionHeading}>2. How to Do It</Text>
+              <Text style={styles.bodyText}>{activeRemedy.microRitual.howToDoIt}</Text>
+            </View>
+
+            <View style={styles.ritualSection}>
+              <Text style={styles.sectionHeading}>3. Why It Works</Text>
+              <Text style={styles.bodyText}>{activeRemedy.microRitual.whyItWorks}</Text>
+            </View>
+
+            <View style={styles.ritualSection}>
+              <Text style={styles.sectionHeading}>4. What to Expect</Text>
+              <Text style={styles.bodyText}>{activeRemedy.microRitual.whatToExp}</Text>
+            </View>
+
+            {/* Action Button */}
+            <TouchableOpacity style={styles.completeButton} onPress={handleMarkTaskComplete}>
+              <Text style={styles.completeButtonText}>
+                {completedNumbers.includes(hierarchy.activeNumber)
+                  ? "✓ Mark Today's Task Complete"
+                  : "Mark Today's Task Complete"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Energetic Enhancers & Voice Recording */}
+          <View style={styles.detailsCard}>
+            <Text style={styles.cardTitle}>Energetic Enhancers for Number {hierarchy.activeNumber}</Text>
+
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Power Color:</Text>
+              <Text style={styles.specValue}>{activeRemedy.powerColor.name}</Text>
+            </View>
+            <Text style={styles.subText}>{activeRemedy.powerColor.description}</Text>
+
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Nourishment Practice (Food Ritual):</Text>
+            </View>
+            <Text style={styles.subText}>{activeRemedy.food}</Text>
+
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Gemstone:</Text>
+              <Text style={styles.specValue}>
+                {activeRemedy.gemstone.primary} (Alt: {activeRemedy.gemstone.alternative})
+              </Text>
+            </View>
+            <Text style={styles.subText}>{activeRemedy.gemstone.ritual}</Text>
+
+            {/* Sacred Affirmation with Voice Recording */}
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Sacred Affirmation:</Text>
+            </View>
+            <Text style={styles.affirmationBox}>"{activeRemedy.affirmation}"</Text>
+
+            {/* Voice Action Buttons */}
+            <View style={styles.audioRow}>
+              <TouchableOpacity
+                style={[styles.audioButton, isRecording && styles.audioButtonRecording]}
+                onPress={toggleRecording}
+              >
+                <Text style={styles.audioButtonText}>
+                  {isRecording ? '⏹️ Stop Recording' : '🎙️ Record Your Voice'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.audioButton, !hasRecording && styles.audioButtonDisabled]}
+                onPress={playRecording}
+                disabled={!hasRecording}
+              >
+                <Text style={styles.audioButtonText}>🔊 Listen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+      {/* TAB 2: CONSOLIDATED DAILY RITUAL PACK */}
+      {selectedTab === 'dailyPack' && (
+        <View>
+          <View style={styles.packCard}>
+            <Text style={styles.cardTitle}>Consolidated Daily Ritual Pack</Text>
+            <Text style={styles.cardSubtitle}>
+              A single daily sequence weaving your missing energies seamlessly through the day.
+            </Text>
+
+            {/* MORNING */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => void togglePackItem('morning')}
+              style={[styles.packItem, dailyPackItems?.morning && styles.packItemCompleted]}
+            >
+              <View style={styles.packItemHeader}>
+                <Text style={styles.packTime}>🌅 MORNING ACTIVATION</Text>
+                <Text style={styles.checkBadge}>
+                  {dailyPackItems?.morning ? '✓ Done' : 'Tap to Complete'}
+                </Text>
+              </View>
+              <Text style={[styles.packItemTitle, dailyPackItems?.morning && styles.completedText]}>
+                {dailyPack.morning.title}
+              </Text>
+              <Text style={styles.bodyText}>{dailyPack.morning.text}</Text>
+            </TouchableOpacity>
+
+            {/* MIDDAY */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => void togglePackItem('midday')}
+              style={[styles.packItem, dailyPackItems?.midday && styles.packItemCompleted]}
+            >
+              <View style={styles.packItemHeader}>
+                <Text style={styles.packTime}>☀️ MIDDAY MINI-RITUAL</Text>
+                <Text style={styles.checkBadge}>
+                  {dailyPackItems?.midday ? '✓ Done' : 'Tap to Complete'}
+                </Text>
+              </View>
+              <Text style={[styles.packItemTitle, dailyPackItems?.midday && styles.completedText]}>
+                {dailyPack.midday.title}
+              </Text>
+              <Text style={styles.bodyText}>{dailyPack.midday.text}</Text>
+            </TouchableOpacity>
+
+            {/* EVENING */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => void togglePackItem('evening')}
+              style={[styles.packItem, dailyPackItems?.evening && styles.packItemCompleted]}
+            >
+              <View style={styles.packItemHeader}>
+                <Text style={styles.packTime}>🌙 EVENING WIND-DOWN</Text>
+                <Text style={styles.checkBadge}>
+                  {dailyPackItems?.evening ? '✓ Done' : 'Tap to Complete'}
+                </Text>
+              </View>
+              <Text style={[styles.packItemTitle, dailyPackItems?.evening && styles.completedText]}>
+                {dailyPack.evening.title}
+              </Text>
+              <Text style={styles.bodyText}>{dailyPack.evening.text}</Text>
+            </TouchableOpacity>
+
+            {/* SUBMIT BUTTON */}
+            {(() => {
+              const allCardsDone = Boolean(dailyPackItems?.morning && dailyPackItems?.midday && dailyPackItems?.evening);
+              const isEnabled = allCardsDone && !dailyPackCompleted;
+
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.completeButton,
+                    dailyPackCompleted && styles.completeButtonDone,
+                    !isEnabled && !dailyPackCompleted && styles.completeButtonDisabled,
+                  ]}
+                  onPress={handleCompleteMyDay}
+                  disabled={!isEnabled}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.completeButtonText,
+                      !isEnabled && !dailyPackCompleted && styles.completeButtonDisabledText,
+                    ]}
+                  >
+                    {dailyPackCompleted
+                      ? '✓ Day Fully Completed!'
+                      : allCardsDone
+                      ? '✨ Submit All Rituals'
+                      : 'Complete all 3 rituals above'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })()}
+          </View>
+        </View>
+      )}
+      {/* TAB 3: HEALING JOURNEY DASHBOARD */}
+      {selectedTab === 'journey' && (
+        <View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Healing Journey Dashboard</Text>
+            <Text style={styles.cardSubtitle}>
+              Every small ritual balances your natal compass.
+            </Text>
+
+            {/* Encouraging Day-Based Header */}
+            <View style={styles.journeyHeaderBox}>
+              <Text style={styles.journeyDayTitle}>Day {questDay} of Your Journey</Text>
+              <Text style={styles.journeyMotivation}>
+                "Consistency shapes the matrix. You are building quiet strength."
+              </Text>
+            </View>
+
+            <View style={styles.progressContainer}>
+              <View
+                style={[
+                  styles.progressBar,
+                  { width: `${Math.max(15, (completedNumbers.length / missingNumbers.length) * 100)}%` },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressLabel}>
+              {completedNumbers.length} of {missingNumbers.length} Blockages Harmonized
+            </Text>
+
+            {/* Badges with Clear Locked vs Unlocked status */}
+            <Text style={[styles.sectionHeading, { marginTop: 22 }]}>Badges & Achievements</Text>
+            <View style={styles.badgeRow}>
+              {/* First Step: Unlocked */}
+              <View style={[styles.badgePill, styles.badgeUnlocked]}>
+                <Text style={styles.badgeEmoji}>🌱</Text>
+                <Text style={styles.badgeTitle}>First Step</Text>
+                <Text style={styles.badgeStatusText}>🔓 Unlocked</Text>
+              </View>
+
+              {/* 5-Day Streak: Unlocked */}
+              <View style={[styles.badgePill, styles.badgeUnlocked]}>
+                <Text style={styles.badgeEmoji}>🔥</Text>
+                <Text style={styles.badgeTitle}>5-Day Flame</Text>
+                <Text style={styles.badgeStatusText}>🔓 Unlocked</Text>
+              </View>
+
+              {/* Grid Master: Locked */}
+              <View
+                style={[
+                  styles.badgePill,
+                  completedNumbers.length === missingNumbers.length
+                    ? styles.badgeUnlocked
+                    : styles.badgeLocked,
+                ]}
+              >
+                <Text style={styles.badgeEmoji}>👑</Text>
+                <Text style={styles.badgeTitle}>Grid Master</Text>
+                <Text style={styles.badgeStatusText}>
+                  {completedNumbers.length === missingNumbers.length ? '🔓 Unlocked' : '🔒 Locked'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Sequence Timeline */}
+            <Text style={[styles.sectionHeading, { marginTop: 22 }]}>Blockage Healing Queue</Text>
+            {missingNumbers.map((num) => {
+              const isDone = completedNumbers.includes(num);
+              const isActive = hierarchy.activeNumber === num;
+              return (
+                <View key={num} style={styles.timelineItem}>
+                  <Text style={styles.timelineNumber}>Number {num} ({EXPANDED_REMEDIES[num]?.keyword})</Text>
+                  <Text style={isDone ? styles.statusHealed : isActive ? styles.statusActive : styles.statusQueued}>
+                    {isDone ? '✨ Healed' : isActive ? '⚡ In Progress' : '🔒 Queued'}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+    </>
+  );
 
   const renderLoShuCell = (num: number) => {
     const isMissing = missingNumbers.includes(num);
@@ -193,324 +521,12 @@ const [selectedTab, setSelectedTab] = useState<'quest' | 'dailyPack' | 'journey'
           </View>
         </View>
 
-        {/* Tab Buttons */}
-          <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tabButton, selectedTab === 'quest' && styles.tabButtonActive]}
-            onPress={() => setSelectedTab('quest')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'quest' && styles.tabTextActive]}>
-              Active Quest
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, selectedTab === 'dailyPack' && styles.tabButtonActive]}
-            onPress={() => setSelectedTab('dailyPack')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'dailyPack' && styles.tabTextActive]}>
-              Daily Pack
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, selectedTab === 'journey' && styles.tabButtonActive]}
-            onPress={() => setSelectedTab('journey')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'journey' && styles.tabTextActive]}>
-              Healing Journey
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* TAB 1: ACTIVE QUEST */}
-        {selectedTab === 'quest' && (
-          <View>
-            <View style={styles.questHeader}>
-              <View style={styles.priorityBadge}>
-                <Text style={styles.priorityText}>PRIORITY FOCUS: NUMBER {hierarchy.activeNumber}</Text>
-              </View>
-              {hierarchy.upcomingNumbers.length > 0 && (
-                <Text style={styles.upcomingNote}>
-                  Queued next: {hierarchy.upcomingNumbers.map((n) => `Number ${n}`).join(', ')}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.questCard}>
-              <Text style={styles.questTitle}>{activeRemedy.microRitual.title}</Text>
-              <Text style={styles.questKeyword}>
-                Theme: {activeRemedy.keyword} • {activeRemedy.title}
-              </Text>
-
-              {/* Day 2 of 7 Quest Progress Bar */}
-              <View style={styles.questProgressContainer}>
-                <View style={styles.questProgressLabels}>
-                  <Text style={styles.questDayLabel}>Progress</Text>
-                  <Text style={styles.questDayCount}>Day {questDay} of 7</Text>
-                </View>
-                <View style={styles.progressBarTrack}>
-                  <View style={[styles.progressBarFill, { width: `${(questDay / 7) * 100}%` }]} />
-                </View>
-              </View>
-
-              <View style={styles.ritualSection}>
-                <Text style={styles.sectionHeading}>1. What to Do</Text>
-                <Text style={styles.bodyText}>{activeRemedy.microRitual.whatToDo}</Text>
-              </View>
-
-              <View style={styles.ritualSection}>
-                <Text style={styles.sectionHeading}>2. How to Do It</Text>
-                <Text style={styles.bodyText}>{activeRemedy.microRitual.howToDoIt}</Text>
-              </View>
-
-              <View style={styles.ritualSection}>
-                <Text style={styles.sectionHeading}>3. Why It Works</Text>
-                <Text style={styles.bodyText}>{activeRemedy.microRitual.whyItWorks}</Text>
-              </View>
-
-              <View style={styles.ritualSection}>
-                <Text style={styles.sectionHeading}>4. What to Expect</Text>
-                <Text style={styles.bodyText}>{activeRemedy.microRitual.whatToExp}</Text>
-              </View>
-
-              {/* Action Button */}
-              <TouchableOpacity style={styles.completeButton} onPress={handleMarkTaskComplete}>
-                <Text style={styles.completeButtonText}>
-                  {completedNumbers.includes(hierarchy.activeNumber)
-                    ? "✓ Mark Today's Task Complete"
-                    : "Mark Today's Task Complete"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Energetic Enhancers & Voice Recording */}
-            <View style={styles.detailsCard}>
-              <Text style={styles.cardTitle}>Energetic Enhancers for Number {hierarchy.activeNumber}</Text>
-
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Power Color:</Text>
-                <Text style={styles.specValue}>{activeRemedy.powerColor.name}</Text>
-              </View>
-              <Text style={styles.subText}>{activeRemedy.powerColor.description}</Text>
-
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Nourishment Practice (Food Ritual):</Text>
-              </View>
-              <Text style={styles.subText}>{activeRemedy.food}</Text>
-
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Gemstone:</Text>
-                <Text style={styles.specValue}>
-                  {activeRemedy.gemstone.primary} (Alt: {activeRemedy.gemstone.alternative})
-                </Text>
-              </View>
-              <Text style={styles.subText}>{activeRemedy.gemstone.ritual}</Text>
-
-              {/* Sacred Affirmation with Voice Recording */}
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Sacred Affirmation:</Text>
-              </View>
-              <Text style={styles.affirmationBox}>"{activeRemedy.affirmation}"</Text>
-
-              {/* Voice Action Buttons */}
-              <View style={styles.audioRow}>
-                <TouchableOpacity
-                  style={[styles.audioButton, isRecording && styles.audioButtonRecording]}
-                  onPress={toggleRecording}
-                >
-                  <Text style={styles.audioButtonText}>
-                    {isRecording ? '⏹️ Stop Recording' : '🎙️ Record Your Voice'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.audioButton, !hasRecording && styles.audioButtonDisabled]}
-                  onPress={playRecording}
-                  disabled={!hasRecording}
-                >
-                  <Text style={styles.audioButtonText}>🔊 Listen</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
-{/* TAB 2: CONSOLIDATED DAILY RITUAL PACK */}
-        {selectedTab === 'dailyPack' && (
-          <View>
-            <View style={styles.packCard}>
-              <Text style={styles.cardTitle}>Consolidated Daily Ritual Pack</Text>
-              <Text style={styles.cardSubtitle}>
-                A single daily sequence weaving your missing energies seamlessly through the day.
-              </Text>
-
-              {/* MORNING */}
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => void togglePackItem('morning')}
-                style={[styles.packItem, dailyPackItems?.morning && styles.packItemCompleted]}
-              >
-                <View style={styles.packItemHeader}>
-                  <Text style={styles.packTime}>🌅 MORNING ACTIVATION</Text>
-                  <Text style={styles.checkBadge}>
-                    {dailyPackItems?.morning ? '✓ Done' : 'Tap to Complete'}
-                  </Text>
-                </View>
-                <Text style={[styles.packItemTitle, dailyPackItems?.morning && styles.completedText]}>
-                  {dailyPack.morning.title}
-                </Text>
-                <Text style={styles.bodyText}>{dailyPack.morning.text}</Text>
-              </TouchableOpacity>
-
-              {/* MIDDAY */}
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => void togglePackItem('midday')}
-                style={[styles.packItem, dailyPackItems?.midday && styles.packItemCompleted]}
-              >
-                <View style={styles.packItemHeader}>
-                  <Text style={styles.packTime}>☀️ MIDDAY MINI-RITUAL</Text>
-                  <Text style={styles.checkBadge}>
-                    {dailyPackItems?.midday ? '✓ Done' : 'Tap to Complete'}
-                  </Text>
-                </View>
-                <Text style={[styles.packItemTitle, dailyPackItems?.midday && styles.completedText]}>
-                  {dailyPack.midday.title}
-                </Text>
-                <Text style={styles.bodyText}>{dailyPack.midday.text}</Text>
-              </TouchableOpacity>
-
-              {/* EVENING */}
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => void togglePackItem('evening')}
-                style={[styles.packItem, dailyPackItems?.evening && styles.packItemCompleted]}
-              >
-                <View style={styles.packItemHeader}>
-                  <Text style={styles.packTime}>🌙 EVENING WIND-DOWN</Text>
-                  <Text style={styles.checkBadge}>
-                    {dailyPackItems?.evening ? '✓ Done' : 'Tap to Complete'}
-                  </Text>
-                </View>
-                <Text style={[styles.packItemTitle, dailyPackItems?.evening && styles.completedText]}>
-                  {dailyPack.evening.title}
-                </Text>
-                <Text style={styles.bodyText}>{dailyPack.evening.text}</Text>
-              </TouchableOpacity>
-
-              {/* SUBMIT BUTTON */}
-              {(() => {
-                const allCardsDone = Boolean(dailyPackItems?.morning && dailyPackItems?.midday && dailyPackItems?.evening);
-                const isEnabled = allCardsDone && !dailyPackCompleted;
-
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.completeButton,
-                      dailyPackCompleted && styles.completeButtonDone,
-                      !isEnabled && !dailyPackCompleted && styles.completeButtonDisabled,
-                    ]}
-                    onPress={handleCompleteMyDay}
-                    disabled={!isEnabled}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={[
-                        styles.completeButtonText,
-                        !isEnabled && !dailyPackCompleted && styles.completeButtonDisabledText,
-                      ]}
-                    >
-                      {dailyPackCompleted
-                        ? '✓ Day Fully Completed!'
-                        : allCardsDone
-                        ? '✨ Submit All Rituals'
-                        : 'Complete all 3 rituals above'}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })()}
-            </View>
-          </View>
-        )}
-        {/* TAB 3: HEALING JOURNEY DASHBOARD */}
-        {selectedTab === 'journey' && (
-          <View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Healing Journey Dashboard</Text>
-              <Text style={styles.cardSubtitle}>
-                Every small ritual balances your natal compass.
-              </Text>
-
-              {/* Encouraging Day-Based Header */}
-              <View style={styles.journeyHeaderBox}>
-                <Text style={styles.journeyDayTitle}>Day {questDay} of Your Journey</Text>
-                <Text style={styles.journeyMotivation}>
-                  "Consistency shapes the matrix. You are building quiet strength."
-                </Text>
-              </View>
-
-              <View style={styles.progressContainer}>
-                <View
-                  style={[
-                    styles.progressBar,
-                    { width: `${Math.max(15, (completedNumbers.length / missingNumbers.length) * 100)}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressLabel}>
-                {completedNumbers.length} of {missingNumbers.length} Blockages Harmonized
-              </Text>
-
-              {/* Badges with Clear Locked vs Unlocked status */}
-              <Text style={[styles.sectionHeading, { marginTop: 22 }]}>Badges & Achievements</Text>
-              <View style={styles.badgeRow}>
-                {/* First Step: Unlocked */}
-                <View style={[styles.badgePill, styles.badgeUnlocked]}>
-                  <Text style={styles.badgeEmoji}>🌱</Text>
-                  <Text style={styles.badgeTitle}>First Step</Text>
-                  <Text style={styles.badgeStatusText}>🔓 Unlocked</Text>
-                </View>
-
-                {/* 5-Day Streak: Unlocked */}
-                <View style={[styles.badgePill, styles.badgeUnlocked]}>
-                  <Text style={styles.badgeEmoji}>🔥</Text>
-                  <Text style={styles.badgeTitle}>5-Day Flame</Text>
-                  <Text style={styles.badgeStatusText}>🔓 Unlocked</Text>
-                </View>
-
-                {/* Grid Master: Locked */}
-                <View
-                  style={[
-                    styles.badgePill,
-                    completedNumbers.length === missingNumbers.length
-                      ? styles.badgeUnlocked
-                      : styles.badgeLocked,
-                  ]}
-                >
-                  <Text style={styles.badgeEmoji}>👑</Text>
-                  <Text style={styles.badgeTitle}>Grid Master</Text>
-                  <Text style={styles.badgeStatusText}>
-                    {completedNumbers.length === missingNumbers.length ? '🔓 Unlocked' : '🔒 Locked'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Sequence Timeline */}
-              <Text style={[styles.sectionHeading, { marginTop: 22 }]}>Blockage Healing Queue</Text>
-              {missingNumbers.map((num) => {
-                const isDone = completedNumbers.includes(num);
-                const isActive = hierarchy.activeNumber === num;
-                return (
-                  <View key={num} style={styles.timelineItem}>
-                    <Text style={styles.timelineNumber}>Number {num} ({EXPANDED_REMEDIES[num]?.keyword})</Text>
-                    <Text style={isDone ? styles.statusHealed : isActive ? styles.statusActive : styles.statusQueued}>
-                      {isDone ? '✨ Healed' : isActive ? '⚡ In Progress' : '🔒 Queued'}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
+        {loading ? null : remediesUnlocked ? (
+          questExperience
+        ) : (
+          <LockOverlay onPressCta={() => router.push('/paywall')}>
+            {questExperience}
+          </LockOverlay>
         )}
 
         {/* Ethical Compass Reminder */}
