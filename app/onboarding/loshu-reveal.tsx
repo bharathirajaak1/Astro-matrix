@@ -100,7 +100,7 @@ export default function LoShuRevealScreen() {
             ENERGY BALANCE
           </Txt>
           <Txt variant="body" style={{ color: '#4338CA', fontSize: 13, lineHeight: 18 }}>
-            Active: {activeDigits.length} | Missing: {missingDigits.length}
+            You have {activeDigits.length} active numbers and {missingDigits.length} missing numbers.
           </Txt>
         </Card>
 
