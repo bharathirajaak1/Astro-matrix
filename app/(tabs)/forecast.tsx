@@ -135,11 +135,15 @@ export default function ForecastScreen() {
 
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Life Path Transit</Text>
-              <Text style={styles.metaVal}>Number {report?.lifePath ?? 8}</Text>
+              <Text style={styles.metaVal}>{report?.lifePath ?? 8}</Text>
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Destiny Resonance</Text>
-              <Text style={styles.metaVal}>Number {report?.destiny ?? 4}</Text>
+              <Text style={styles.metaVal}>{report?.destiny ?? 4}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Lucky Number</Text>
+              <Text style={styles.metaVal}>{forecast?.luckyNumber ?? 7}</Text>
             </View>
           </View>
         )}

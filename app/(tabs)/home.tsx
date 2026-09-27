@@ -92,7 +92,7 @@ export default function HomeScreen() {
               {report.birthday}
             </Txt>
             <Txt variant="caption" color="textMuted">
-              Birth Number
+              Birthday
             </Txt>
           </View>
           <View style={{ width: '30%', alignItems: 'center', gap: spacing.xs }}>
@@ -129,6 +129,12 @@ export default function HomeScreen() {
         </Txt>
         <Txt variant="body">
           Repeated: {loShu.repeated.length > 0 ? loShu.repeated.join(', ') : 'None'}
+        </Txt>
+        <Txt variant="caption" color="textMuted">
+          Missing numbers show qualities you may want to develop.
+        </Txt>
+        <Txt variant="caption" color="textMuted">
+          Repeated numbers show qualities that appear more strongly in your birth date.
         </Txt>
       </Card>
 
