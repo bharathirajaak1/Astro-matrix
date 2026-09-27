@@ -8,8 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Platform,
-  StatusBar,
   Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -497,11 +495,8 @@ const [selectedTab, setSelectedTab] = useState<'quest' | 'dailyPack' | 'journey'
 
         {/* Top Header */}
         <View style={styles.topRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Dashboard</Text>
-          </TouchableOpacity>
           <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {streakDays}-Day Streak</Text>
+            <Text style={styles.streakText}>🔥 {streakDays}-Day Ritual Streak</Text>
           </View>
         </View>
 
@@ -548,7 +543,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FAF9F6',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   container: { padding: 20, paddingBottom: 60 },
   celebrationBanner: {
@@ -565,8 +559,6 @@ const styles = StyleSheet.create({
   celebrationTitle: { fontSize: 24, color: '#FFFFFF', fontWeight: '800' },
   celebrationSub: { fontSize: 13, color: '#FFFFFF', fontWeight: '700', marginTop: 4 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  backButton: { paddingVertical: 4 },
-  backButtonText: { fontSize: 14, color: '#5E7563', fontWeight: '700' },
   streakBadge: { backgroundColor: '#FFF3E0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: '#FFE0B2' },
   streakText: { fontSize: 12, fontWeight: '800', color: '#E65100' },
   title: { fontSize: 24, fontWeight: '800', color: '#2C2523', marginBottom: 16 },

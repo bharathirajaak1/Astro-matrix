@@ -61,14 +61,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <FontAwesome name="lock" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="numerology"
-        options={{ href: null, title: 'Numerology' }}
-      />
-      <Tabs.Screen
-        name="grid"
-        options={{ href: null, title: 'Grid' }}
-      />
     </Tabs>
   );
 }

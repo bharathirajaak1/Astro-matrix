@@ -276,32 +276,6 @@ export default function BlueprintScreen() {
       })}
 
       <SectionHeader title="Explore Further" subtitle="Dive deeper into your blueprint" />
-      <Card onPress={() => router.push('/(tabs)/numerology')} accessibilityLabel="Open Numbers">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Txt variant="heading">Numbers</Txt>
-            <Txt variant="caption" color="textMuted">
-              Full core numerology details
-            </Txt>
-          </View>
-          <Txt variant="caption" color="primary">
-            View →
-          </Txt>
-        </View>
-      </Card>
-      <Card onPress={() => router.push('/(tabs)/grid')} accessibilityLabel="Open Lo Shu grid">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Txt variant="heading">Lo Shu / Sacred Matrix</Txt>
-            <Txt variant="caption" color="textMuted">
-              Full grid detail view
-            </Txt>
-          </View>
-          <Txt variant="caption" color="primary">
-            View →
-          </Txt>
-        </View>
-      </Card>
       <Card
         onPress={() => router.push('/onboarding/swot-audit?context=blueprint')}
         accessibilityLabel="Open Personal SWOT"

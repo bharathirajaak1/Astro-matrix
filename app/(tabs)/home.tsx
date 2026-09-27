@@ -147,7 +147,7 @@ export default function HomeScreen() {
       <SectionHeader title="Your Journey" subtitle="Ritual streak and quest progress" />
       <Card>
         <Txt variant="body">Quest Day {questDay} of 7</Txt>
-        <Txt variant="body">{streakDays}-day streak</Txt>
+        <Txt variant="body">{streakDays}-day ritual streak</Txt>
         <Txt variant="caption" color="textMuted">
           {dailyPackCompleted ? "Today's ritual pack is complete" : "Today's ritual pack is not complete"}
         </Txt>
