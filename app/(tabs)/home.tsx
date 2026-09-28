@@ -59,6 +59,13 @@ export default function HomeScreen() {
 
   const firstName = profile.fullName.trim().split(' ')[0] || profile.fullName;
 
+  const [dobYear, dobMonth, dobDay] = profile.dob.split('-').map(Number);
+  const dobFormatted = new Date(dobYear, dobMonth - 1, dobDay).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   return (
     <Screen>
       <View style={{ gap: spacing.xs }}>
@@ -71,7 +78,7 @@ export default function HomeScreen() {
             {profile.fullName}
           </Txt>
           <Txt variant="caption" color="textMuted">
-            Born {profile.dob} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
+            Born {dobFormatted} • {profile.system === 'chaldean' ? 'Chaldean' : 'Pythagorean'} system
           </Txt>
         </View>
       </View>

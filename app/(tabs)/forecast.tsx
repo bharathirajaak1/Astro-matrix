@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildNumerologyReport } from '@/core/numerology';
 import { personalNumbers, buildForecast } from '@/core/forecast';
+import { FOCUS_COPY } from '@/data/interpretations';
 
 type ForecastTab = 'day' | 'month' | 'year';
 
@@ -26,6 +27,24 @@ export default function ForecastScreen() {
 
   // Today's ISO date (YYYY-MM-DD)
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const todayFormatted = useMemo(() => {
+    const [year, month, day] = todayIso.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }, [todayIso]);
+
+  const dobFormatted = useMemo(() => {
+    const [year, month, day] = activeDob.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }, [activeDob]);
 
   const forecastData = useMemo(() => {
     try {
@@ -63,7 +82,10 @@ export default function ForecastScreen() {
           <Text style={styles.headerSub}>TEMPORAL MATRIX</Text>
           <Text style={styles.headerTitle}>Personal Cycles & Forecast</Text>
           <Text style={styles.headerDate}>
-            {activeName} • DOB: {activeDob}
+            {activeName} • Born {dobFormatted}
+          </Text>
+          <Text style={styles.headerDate}>
+            Based on today's date — {todayFormatted}, your personal numbers for today are calculated below.
           </Text>
         </View>
 
@@ -124,27 +146,61 @@ export default function ForecastScreen() {
         {activeTab === 'day' && (
           <View style={styles.card}>
             <Text style={styles.cardTheme}>
-              Personal Day {cycles?.personalDay ?? 1}: Energetic Alignment
+              {forecast?.headline}
             </Text>
             <Text style={styles.cardBody}>
-              {(forecast as any)?.theme ||
-                `Today carries the vibrational frequency of Personal Day ${cycles?.personalDay ?? 1}. Align your highest priorities with deliberate focus.`}
+              {forecast?.body}
             </Text>
 
             <View style={styles.divider} />
 
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Life Path Transit</Text>
+            <Text style={styles.guidelinesTitle}>What this means for you</Text>
+            <Text style={styles.cardBody}>
+              Use the guidance above as a gentle lens for the day ahead — a reflection to keep in mind rather than a fixed outcome.
+            </Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>
+              Your focus today: {FOCUS_COPY[forecast?.focus ?? 'plan']?.label}
+            </Text>
+            <Text style={styles.cardBody}>
+              {FOCUS_COPY[forecast?.focus ?? 'plan']?.hint}
+            </Text>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.guidelinesTitle}>Your numbers for today</Text>
+            <Text style={styles.cardBody}>
+              These numbers add context to today's Personal Day.
+            </Text>
+
+            <View style={[styles.metaRow, { marginTop: 10 }]}>
+              <Text style={styles.metaLabel}>Life Path</Text>
               <Text style={styles.metaVal}>{report?.lifePath ?? 8}</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Destiny Resonance</Text>
+            <Text style={styles.guideText}>
+              Your broader life-path number, providing additional context for today's theme.
+            </Text>
+
+            <View style={[styles.metaRow, { marginTop: 10 }]}>
+              <Text style={styles.metaLabel}>Destiny</Text>
               <Text style={styles.metaVal}>{report?.destiny ?? 4}</Text>
             </View>
-            <View style={styles.metaRow}>
+            <Text style={styles.guideText}>
+              Adds another layer of context to today's reading.
+            </Text>
+
+            <View style={[styles.metaRow, { marginTop: 10 }]}>
               <Text style={styles.metaLabel}>Lucky Number</Text>
               <Text style={styles.metaVal}>{forecast?.luckyNumber ?? 7}</Text>
             </View>
+            <Text style={styles.guideText}>
+              A symbolic number you can use as a personal reminder or reflection point today.
+            </Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>How to use these numbers</Text>
+            <Text style={styles.cardBody}>
+              Let your Personal Day be your main focus for today. Your Life Path and Destiny numbers provide additional context for how you can approach that theme, while your Lucky Number can be used as a simple personal reminder or reflection point.
+            </Text>
           </View>
         )}
 
