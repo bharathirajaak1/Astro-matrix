@@ -39,28 +39,28 @@ describe('generateNumbersSummary', () => {
 });
 
 describe('generateLoShuSummary', () => {
-  test('1940-10-09: partially active plane uses the "channels" template', () => {
+  test('1940-10-09: partially active plane uses the "traditionally associated with... developing" template', () => {
     expect(generateLoShuSummary('1940-10-09')).toBe(
-      'Your grid channels exceptional willpower (9-5-1 partially active), with a key path to cultivate confident creative self-expression (Missing 2, 3, 5, 6, 7, 8).'
+      'In numerology, your birth-date pattern is traditionally associated with exceptional willpower. It may be worth developing confident creative self-expression as a complementary area of growth.'
     );
   });
 
-  test('1987-06-24: fully active plane uses the "shows" template', () => {
+  test('1987-06-24: fully active plane uses the "one of your strongest patterns... balancing" template', () => {
     expect(generateLoShuSummary('1987-06-24')).toBe(
-      'Your grid shows razor-sharp intellect and strategy (4-9-2 active), with an opportunity to build confident creative self-expression (Missing 3, 5).'
+      'In numerology, your birth-date pattern is traditionally associated with razor-sharp intellect and strategy — one of your strongest patterns. It may also be worth balancing that with confident creative self-expression.'
     );
   });
 
   test('empty string does not throw and falls back to an all-missing summary', () => {
     expect(() => generateLoShuSummary('')).not.toThrow();
     expect(generateLoShuSummary('')).toBe(
-      'Your grid channels exceptional willpower (9-5-1 partially active), with a key path to cultivate financial order and systematic discipline (Missing 1, 2, 3, 4, 5, 6, 7, 8, 9).'
+      'In numerology, your birth-date pattern is traditionally associated with exceptional willpower. It may be worth developing financial order and systematic discipline as a complementary area of growth.'
     );
   });
 
   test('2011-11-11: repeated digits do not change presence-based plane matching', () => {
     expect(generateLoShuSummary('2011-11-11')).toBe(
-      'Your grid channels exceptional willpower (9-5-1 partially active), with a key path to cultivate financial order and systematic discipline (Missing 3, 4, 5, 6, 7, 8, 9).'
+      'In numerology, your birth-date pattern is traditionally associated with exceptional willpower. It may be worth developing financial order and systematic discipline as a complementary area of growth.'
     );
   });
 });

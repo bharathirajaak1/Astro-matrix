@@ -73,8 +73,8 @@ const PLANES: readonly PlaneInfo[] = [
   },
   {
     friendlyName: 'Vision & Planning',
-    subtitle: 'Conception & strategy',
-    description: 'Your ability to conceive, plan, and structure ideas.',
+    subtitle: 'Ideas & strategy',
+    description: 'Your ability to come up with ideas, plan ahead, and structure your approach.',
     icon: '🔭',
     numbers: [4, 3, 8],
   },
@@ -88,7 +88,7 @@ const PLANES: readonly PlaneInfo[] = [
   {
     friendlyName: 'Manifestation',
     subtitle: 'Decisive movement',
-    description: 'Your physical realization, decisive movement, and tangible execution.',
+    description: 'Your ability to turn ideas into visible results, and to follow through until something becomes real.',
     icon: '🏃',
     numbers: [2, 7, 6],
   },
@@ -139,11 +139,20 @@ export default function BlueprintScreen() {
         </Txt>
       </View>
 
+      <Txt variant="body">
+        Your Blueprint brings together your core numerology numbers and your Lo Shu birth-date
+        pattern — two different ways of looking at your personality and tendencies.
+      </Txt>
+
       <Txt variant="body" color="textMuted">
         {numbersSummary}
       </Txt>
 
       <SectionHeader title="Core Numbers" subtitle="Your blueprint, in detail" />
+      <Txt variant="body">
+        Your core numbers are calculated from your name and date of birth, and each one offers a
+        different perspective on your personality, strengths, and motivations.
+      </Txt>
       {CORE_NUMBERS.map(({ key, title, blurb }) => {
         const value = report[key];
         const open = openKey === key;
@@ -187,6 +196,12 @@ export default function BlueprintScreen() {
       })}
 
       <SectionHeader title="Sacred Matrix" subtitle="Your Lo Shu grid" />
+      <Txt variant="body">
+        The Lo Shu Grid is a numerology tool based on an ancient Chinese number square. It places
+        each digit of your birth date onto this fixed 3×3 pattern, showing how often each number
+        appears — traditionally used to reflect on your natural strengths and areas you may want
+        to develop.
+      </Txt>
       <Card>
         <View style={{ gap: spacing.sm }}>
           {GRID_ROWS.map((row, rowIndex) => (
@@ -226,38 +241,39 @@ export default function BlueprintScreen() {
         {loShuSummary}
       </Txt>
 
-      <SectionHeader title="Planes of Expression" subtitle="Where your energy flows" />
+      <SectionHeader title="Planes of Expression" subtitle="Six ways to explore your Lo Shu pattern" />
+      <Txt variant="body">
+        The six planes group the numbers in your Lo Shu Grid into six areas: thinking, emotions,
+        action, planning, persistence, and manifestation. The number of digits present in each
+        group gives you a simple view of how represented that area is in your birth-date pattern.
+      </Txt>
       {PLANES.map((plane) => {
         const activeCount = plane.numbers.filter((num) => (counts[num] || 0) > 0).length;
         const total = plane.numbers.length;
         const statusText =
           activeCount === 0
-            ? '🌱 Awakening'
+            ? '🌱 None of the 3 numbers present'
             : activeCount === total
-              ? '✨ Harmonized'
-              : `🌿 ${activeCount}/${total} Active`;
+              ? '✨ All 3 numbers present'
+              : `🌿 ${activeCount} of ${total} numbers present`;
         return (
           <Card key={plane.friendlyName}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <Txt variant="heading">{plane.icon}</Txt>
-                <View>
-                  <Txt variant="heading">{plane.friendlyName}</Txt>
-                  <Txt variant="caption" color="textMuted">
-                    {plane.subtitle}
-                  </Txt>
-                </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <Txt variant="heading">{plane.icon}</Txt>
+              <View style={{ flex: 1 }}>
+                <Txt variant="heading">{plane.friendlyName}</Txt>
+                <Txt variant="caption" color="textMuted">
+                  {plane.subtitle}
+                </Txt>
               </View>
-              <Txt variant="caption" color="textMuted">
-                {statusText}
-              </Txt>
             </View>
+            <Txt
+              variant="caption"
+              color="textMuted"
+              style={{ fontSize: 11, fontWeight: '400', marginTop: spacing.xs }}
+            >
+              {statusText}
+            </Txt>
             <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.sm }}>
               {plane.description}
             </Txt>

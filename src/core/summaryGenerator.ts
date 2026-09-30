@@ -90,18 +90,14 @@ export const generateLoShuSummary = (dob: string): string => {
     }
   }
 
-  // 2. Identify all missing numbers and primary growth focus
-  const allMissing = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => !digitCounts[n]);
-  const missingLabel = allMissing.join(', ');
-
+  // 2. Identify primary growth focus
   const priorityOrder = [4, 3, 2, 5, 7, 8, 1, 6, 9];
   const primaryMissing = priorityOrder.find((n) => !digitCounts[n]) || 4;
   const growthArea = MISSING_GROWTH_AREAS[primaryMissing] || 'inner balance';
-  const planeNumbersLabel = bestPlane.numbers.join('-');
 
 if (maxMatches === 3) {
-    return `Your grid shows ${bestPlane.strengthText} (${planeNumbersLabel} active), with an opportunity to build ${growthArea} (Missing ${missingLabel}).`;
+    return `In numerology, your birth-date pattern is traditionally associated with ${bestPlane.strengthText} — one of your strongest patterns. It may also be worth balancing that with ${growthArea}.`;
   }
 
-  return `Your grid channels ${bestPlane.strengthText} (${planeNumbersLabel} partially active), with a key path to cultivate ${growthArea} (Missing ${missingLabel}).`;
+  return `In numerology, your birth-date pattern is traditionally associated with ${bestPlane.strengthText}. It may be worth developing ${growthArea} as a complementary area of growth.`;
 };
