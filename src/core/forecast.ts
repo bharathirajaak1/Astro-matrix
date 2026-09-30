@@ -309,6 +309,93 @@ export function personalWeek(dob: string, onDate: string): Digit {
 }
 
 // ---------------------------------------------------------------------------
+// Calculation breakdowns - the same inputs `personalYear`/`personalMonth`/
+// `personalDay`/`personalWeek` already add together, exposed as plain data so
+// the UI can show the real arithmetic instead of a generic description. The
+// resulting digit in each breakdown always comes from calling the canonical
+// function directly (never from re-reducing the sum locally), so it can
+// never drift from the number shown elsewhere on the card.
+// ---------------------------------------------------------------------------
+
+export interface PersonalYearBreakdown {
+  reducedBirthDay: Digit;
+  reducedBirthMonth: Digit;
+  reducedTargetYear: Digit;
+  sum: number;
+  personalYear: Digit;
+}
+
+export function personalYearBreakdown(dob: string, onDate: string): PersonalYearBreakdown {
+  const birth = parseISODate(dob);
+  const target = parseISODate(onDate);
+  const reducedBirthDay = reduceNumber(birth.day, false).value as Digit;
+  const reducedBirthMonth = reduceNumber(birth.month, false).value as Digit;
+  const reducedTargetYear = reduceNumber(target.year, false).value as Digit;
+  return {
+    reducedBirthDay,
+    reducedBirthMonth,
+    reducedTargetYear,
+    sum: reducedBirthDay + reducedBirthMonth + reducedTargetYear,
+    personalYear: personalYear(dob, onDate),
+  };
+}
+
+export interface PersonalMonthBreakdown {
+  personalYear: Digit;
+  month: number;
+  sum: number;
+  personalMonth: Digit;
+}
+
+export function personalMonthBreakdown(dob: string, onDate: string): PersonalMonthBreakdown {
+  const target = parseISODate(onDate);
+  const py = personalYear(dob, onDate);
+  return {
+    personalYear: py,
+    month: target.month,
+    sum: py + target.month,
+    personalMonth: personalMonth(dob, onDate),
+  };
+}
+
+export interface PersonalDayBreakdown {
+  personalMonth: Digit;
+  day: number;
+  sum: number;
+  personalDay: Digit;
+}
+
+export function personalDayBreakdown(dob: string, onDate: string): PersonalDayBreakdown {
+  const target = parseISODate(onDate);
+  const pm = personalMonth(dob, onDate);
+  return {
+    personalMonth: pm,
+    day: target.day,
+    sum: pm + target.day,
+    personalDay: personalDay(dob, onDate),
+  };
+}
+
+export interface PersonalWeekBreakdown {
+  personalDays: Digit[];
+  sum: number;
+  personalWeek: Digit;
+}
+
+export function personalWeekBreakdown(dob: string, onDate: string): PersonalWeekBreakdown {
+  const { weekStart } = weekBounds(onDate);
+  const personalDays: Digit[] = [];
+  for (let i = 0; i < 7; i += 1) {
+    personalDays.push(personalDay(dob, addDays(weekStart, i)));
+  }
+  return {
+    personalDays,
+    sum: personalDays.reduce((a, b) => a + b, 0),
+    personalWeek: personalWeek(dob, onDate),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Weekly / Monthly / Annual forecast content
 //
 // Additive only - none of this is used by (or changes the behaviour of)

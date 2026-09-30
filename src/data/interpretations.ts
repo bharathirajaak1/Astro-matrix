@@ -3,6 +3,13 @@
  * components so it can be reviewed and localized later.
  */
 import type { CoreNumber } from '@/core/types';
+import type {
+  PersonalDayBreakdown,
+  PersonalMonthBreakdown,
+  PersonalWeekBreakdown,
+  PersonalYearBreakdown,
+} from '@/core/forecast';
+import { MONTH_NAMES } from '@/lib/date';
 
 /** One-line meaning for each reduced / master number. */
 export const NUMBER_MEANING: Record<number, string> = {
@@ -92,9 +99,6 @@ export interface PeriodExplanation {
   whereFrom: string;
   /** Why it's relevant on this particular forecast screen. */
   whyRelevant: string;
-  /** Optional "How is this calculated?" expansion - most useful for Week,
-   *  since AstroMatrix's weekly convention isn't a familiar concept. */
-  howCalculated: string;
 }
 
 function lowerFirst(text: string): string {
@@ -111,15 +115,13 @@ export function themeClauseFor(digit: number): string {
 
 const PERIOD_EXPLANATION_COPY: Record<
   ForecastPeriod,
-  { numberLabel: string; representsTimeframe: string; whereFrom: string; whyRelevant: string; howCalculated: string }
+  { numberLabel: string; representsTimeframe: string; whereFrom: string; whyRelevant: string }
 > = {
   day: {
     numberLabel: 'Personal Day',
     representsTimeframe: 'your day today',
     whereFrom: "Your Personal Day Number is calculated from today's date together with your Personal Month Number and Personal Year Number.",
     whyRelevant: 'It sets a theme for how today may feel and what kind of activities it may suit.',
-    howCalculated:
-      "Your Personal Day Number is calculated from your Personal Month Number and today's date, then reduced to a single digit.",
   },
   week: {
     numberLabel: 'Personal Week',
@@ -127,24 +129,18 @@ const PERIOD_EXPLANATION_COPY: Record<
     whereFrom:
       'This is an AstroMatrix-defined weekly cycle, not a universal numerology standard - it adds together the Personal Day number for each of the 7 days in this Sunday-Saturday week and reduces the total to a single digit.',
     whyRelevant: 'It sets a broader theme for the week as a whole, beyond any single day.',
-    howCalculated:
-      'Your Personal Week Number is calculated by adding the Personal Day numbers for each day of this week and reducing the total to a single digit.',
   },
   month: {
     numberLabel: 'Personal Month',
     representsTimeframe: 'your current month',
     whereFrom: 'Your Personal Month Number is calculated from your Personal Year Number together with the current calendar month.',
     whyRelevant: 'It sets a broader theme running through this month.',
-    howCalculated:
-      'Your Personal Month Number is calculated from your Personal Year Number and the current month, then reduced to a single digit.',
   },
   year: {
     numberLabel: 'Personal Year',
     representsTimeframe: 'your year',
     whereFrom: 'Your Personal Year Number is calculated from your date of birth together with the current calendar year.',
     whyRelevant: 'It sets a long-term theme for your year as a whole.',
-    howCalculated:
-      'Your Personal Year Number is calculated from your birth day, birth month, and the current year, then reduced to a single digit.',
   },
 };
 
@@ -164,6 +160,45 @@ export function explainPersonalNumber(period: ForecastPeriod, digit: number): Pe
     represents: `${representsPrefix} ${copy.representsTimeframe} — ${themeClauseFor(digit)}.`,
     whereFrom: copy.whereFrom,
     whyRelevant: copy.whyRelevant,
-    howCalculated: copy.howCalculated,
   };
+}
+
+// ---------------------------------------------------------------------------
+// "How is this calculated?" - built from the real breakdown values for the
+// active profile/date (see `src/core/forecast.ts`'s `*Breakdown` functions),
+// so the explanation always shows the actual numbers behind the card instead
+// of a generic description.
+// ---------------------------------------------------------------------------
+
+export function explainYearCalculation(breakdown: PersonalYearBreakdown): string {
+  const { reducedBirthDay, reducedBirthMonth, reducedTargetYear, sum, personalYear } = breakdown;
+  return (
+    'Your Personal Year Number is calculated from your reduced birth day, birth month, and the current year. ' +
+    `For you, that is ${reducedBirthDay} + ${reducedBirthMonth} + ${reducedTargetYear} = ${sum} → ${personalYear}.`
+  );
+}
+
+export function explainMonthCalculation(breakdown: PersonalMonthBreakdown): string {
+  const { personalYear, month, sum, personalMonth } = breakdown;
+  const monthName = MONTH_NAMES[month - 1];
+  return (
+    'Your Personal Month Number is calculated by adding your Personal Year Number and the calendar month. ' +
+    `For ${monthName}, that is ${personalYear} + ${month} = ${sum} → ${personalMonth}.`
+  );
+}
+
+export function explainDayCalculation(breakdown: PersonalDayBreakdown): string {
+  const { personalMonth, day, sum, personalDay } = breakdown;
+  return (
+    'Your Personal Day Number is calculated by adding your Personal Month Number and the day of the month. ' +
+    `For today, that is ${personalMonth} + ${day} = ${sum} → ${personalDay}.`
+  );
+}
+
+export function explainWeekCalculation(breakdown: PersonalWeekBreakdown): string {
+  const { personalDays, sum, personalWeek } = breakdown;
+  return (
+    'Your Personal Week Number is calculated from the Personal Day numbers for each day of this week: ' +
+    `${personalDays.join(' + ')} = ${sum} → ${personalWeek}.`
+  );
 }

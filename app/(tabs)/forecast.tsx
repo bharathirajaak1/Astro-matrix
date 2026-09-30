@@ -16,11 +16,23 @@ import {
   buildMonthlyForecast,
   buildWeeklyForecast,
   dayWatchFor,
+  personalDayBreakdown,
+  personalMonthBreakdown,
   personalNumbers,
   personalWeek,
+  personalWeekBreakdown,
+  personalYearBreakdown,
   weekBounds,
 } from '@/core/forecast';
-import { FOCUS_COPY, explainPersonalNumber, themeClauseFor } from '@/data/interpretations';
+import {
+  FOCUS_COPY,
+  explainDayCalculation,
+  explainMonthCalculation,
+  explainPersonalNumber,
+  explainWeekCalculation,
+  explainYearCalculation,
+  themeClauseFor,
+} from '@/data/interpretations';
 import { formatDateRange, formatMonthYear, formatUSDate, formatYearOnly } from '@/lib/date';
 
 type ForecastTab = 'day' | 'week' | 'month' | 'year';
@@ -89,6 +101,11 @@ export default function ForecastScreen() {
   const monthExplanation = explainPersonalNumber('month', cycles?.personalMonth ?? 1);
   const yearExplanation = explainPersonalNumber('year', cycles?.personalYear ?? 1);
 
+  const dayCalculation = explainDayCalculation(personalDayBreakdown(activeDob, todayIso));
+  const weekCalculation = explainWeekCalculation(personalWeekBreakdown(activeDob, todayIso));
+  const monthCalculation = explainMonthCalculation(personalMonthBreakdown(activeDob, todayIso));
+  const yearCalculation = explainYearCalculation(personalYearBreakdown(activeDob, todayIso));
+
   const luckyNumber = day?.luckyNumber ?? 1;
 
   return (
@@ -96,13 +113,13 @@ export default function ForecastScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerSub}>TEMPORAL MATRIX</Text>
-          <Text style={styles.headerTitle}>Personal Cycles & Forecast</Text>
+          <Text style={styles.headerSub}>PERSONAL FORECAST</Text>
+          <Text style={styles.headerTitle}>Your Personal Forecast</Text>
           <Text style={styles.headerDate}>
             {activeName} • Born {formatUSDate(activeDob)}
           </Text>
           <Text style={styles.headerDate}>
-            Based on today's date — {formatUSDate(todayIso)}, your personal numbers for today are calculated below.
+            Based on today's date — {formatUSDate(todayIso)}, your personal forecast periods are shown below.
           </Text>
         </View>
 
@@ -185,12 +202,12 @@ export default function ForecastScreen() {
                 setDayCalcExpanded((prev) => !prev);
               }}
             >
-              <Text style={styles.expandLabel}>
+              <Text style={[styles.expandLabel, { color: theme.colors.primary }]}>
                 {dayCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
               </Text>
             </TouchableOpacity>
             {dayCalcExpanded && (
-              <Text style={styles.cardBody}>{dayExplanation.howCalculated}</Text>
+              <Text style={styles.cardBody}>{dayCalculation}</Text>
             )}
 
             <View style={styles.divider} />
@@ -251,12 +268,12 @@ export default function ForecastScreen() {
                 setWeekCalcExpanded((prev) => !prev);
               }}
             >
-              <Text style={styles.expandLabel}>
+              <Text style={[styles.expandLabel, { color: theme.colors.primary }]}>
                 {weekCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
               </Text>
             </TouchableOpacity>
             {weekCalcExpanded && (
-              <Text style={styles.cardBody}>{weekExplanation.howCalculated}</Text>
+              <Text style={styles.cardBody}>{weekCalculation}</Text>
             )}
 
             <View style={styles.divider} />
@@ -309,12 +326,12 @@ export default function ForecastScreen() {
                 setMonthCalcExpanded((prev) => !prev);
               }}
             >
-              <Text style={styles.expandLabel}>
+              <Text style={[styles.expandLabel, { color: theme.colors.primary }]}>
                 {monthCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
               </Text>
             </TouchableOpacity>
             {monthCalcExpanded && (
-              <Text style={styles.cardBody}>{monthExplanation.howCalculated}</Text>
+              <Text style={styles.cardBody}>{monthCalculation}</Text>
             )}
 
             <View style={styles.divider} />
@@ -367,12 +384,12 @@ export default function ForecastScreen() {
                 setYearCalcExpanded((prev) => !prev);
               }}
             >
-              <Text style={styles.expandLabel}>
+              <Text style={[styles.expandLabel, { color: theme.colors.primary }]}>
                 {yearCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
               </Text>
             </TouchableOpacity>
             {yearCalcExpanded && (
-              <Text style={styles.cardBody}>{yearExplanation.howCalculated}</Text>
+              <Text style={styles.cardBody}>{yearCalculation}</Text>
             )}
 
             <View style={styles.divider} />
@@ -465,11 +482,11 @@ const styles = StyleSheet.create({
   periodDate: { fontSize: 18, fontWeight: '800', color: '#2C2523', marginTop: 4 },
   numberStatement: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 6 },
   explanationLine: { fontSize: 12, color: '#8C847E', lineHeight: 18, marginTop: 6 },
-  cardTheme: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 8, marginTop: 2 },
+  cardTheme: { fontSize: 13, fontWeight: '800', color: '#2C2523', marginBottom: 8, marginTop: 2 },
   cardBody: { fontSize: 13, color: '#6A625B', lineHeight: 20 },
   divider: { height: 1, backgroundColor: '#F0ECE6', marginVertical: 14 },
   expandRow: { marginTop: 10 },
-  expandLabel: { fontSize: 12, fontWeight: '700', color: '#5E7563' },
+  expandLabel: { fontSize: 12, fontWeight: '700' },
   guidelinesTitle: { fontSize: 14, fontWeight: '800', color: '#2C2523', marginBottom: 10 },
   guideRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 4 },
   guideBullet: { fontSize: 14, color: '#5E7563', marginRight: 8, lineHeight: 18 },

@@ -12,10 +12,14 @@ import {
   buildWeeklyForecast,
   dayWatchFor,
   personalDay,
+  personalDayBreakdown,
   personalMonth,
+  personalMonthBreakdown,
   personalNumbers,
   personalWeek,
+  personalWeekBreakdown,
   personalYear,
+  personalYearBreakdown,
   stableIndex,
   weekBounds,
 } from '../../src/core/forecast';
@@ -361,6 +365,61 @@ describe('personalWeek', () => {
   test('invalid date throws RangeError, matching existing forecast/date validation', () => {
     expect(() => personalWeek(dob, 'nope')).toThrow(RangeError);
     expect(() => personalWeek('bad', '2026-09-29')).toThrow(RangeError);
+  });
+});
+
+describe('calculation breakdowns', () => {
+  const dob = '1990-01-15';
+  const onDate = '2026-09-01';
+
+  test('personalYearBreakdown exposes the reduced birth day/month/year that sum to personalYear', () => {
+    const b = personalYearBreakdown(dob, onDate);
+    expect(b).toEqual({
+      reducedBirthDay: 6,
+      reducedBirthMonth: 1,
+      reducedTargetYear: 1,
+      sum: 8,
+      personalYear: 8,
+    });
+    expect(b.reducedBirthDay + b.reducedBirthMonth + b.reducedTargetYear).toBe(b.sum);
+    expect(b.personalYear).toBe(personalYear(dob, onDate));
+  });
+
+  test('personalMonthBreakdown exposes Personal Year + calendar month that sum to personalMonth', () => {
+    const b = personalMonthBreakdown(dob, onDate);
+    expect(b).toEqual({ personalYear: 8, month: 9, sum: 17, personalMonth: 8 });
+    expect(b.personalYear + b.month).toBe(b.sum);
+    expect(b.personalMonth).toBe(personalMonth(dob, onDate));
+  });
+
+  test('personalDayBreakdown exposes Personal Month + day of month that sum to personalDay', () => {
+    const b = personalDayBreakdown(dob, onDate);
+    expect(b).toEqual({ personalMonth: 8, day: 1, sum: 9, personalDay: 9 });
+    expect(b.personalMonth + b.day).toBe(b.sum);
+    expect(b.personalDay).toBe(personalDay(dob, onDate));
+  });
+
+  test('personalWeekBreakdown exposes the 7 correct Personal Day values for the correct week', () => {
+    const b = personalWeekBreakdown(dob, '2026-09-29');
+    expect(b).toEqual({ personalDays: [8, 9, 1, 2, 1, 2, 3], sum: 26, personalWeek: 8 });
+    expect(b.personalDays.reduce((a, d) => a + d, 0)).toBe(b.sum);
+    expect(b.personalWeek).toBe(personalWeek(dob, '2026-09-29'));
+  });
+
+  test('every breakdown\'s resulting digit always agrees with its canonical function, across many dates', () => {
+    for (let d = 1; d <= 28; d += 1) {
+      const iso = `2026-04-${String(d).padStart(2, '0')}`;
+      expect(personalYearBreakdown(dob, iso).personalYear).toBe(personalYear(dob, iso));
+      expect(personalMonthBreakdown(dob, iso).personalMonth).toBe(personalMonth(dob, iso));
+      expect(personalDayBreakdown(dob, iso).personalDay).toBe(personalDay(dob, iso));
+      expect(personalWeekBreakdown(dob, iso).personalWeek).toBe(personalWeek(dob, iso));
+    }
+  });
+
+  test('a different date produces a different, correctly-updated breakdown', () => {
+    expect(personalDayBreakdown(dob, '2026-09-01')).not.toEqual(personalDayBreakdown(dob, '2026-09-02'));
+    expect(personalMonthBreakdown(dob, '2026-09-01')).not.toEqual(personalMonthBreakdown(dob, '2026-10-01'));
+    expect(personalYearBreakdown(dob, '2026-09-01')).not.toEqual(personalYearBreakdown(dob, '2027-09-01'));
   });
 });
 
