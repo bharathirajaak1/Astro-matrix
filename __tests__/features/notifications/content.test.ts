@@ -33,8 +33,8 @@ describe('buildReminderContent', () => {
 
   test('golden content for Ada on 2026-09-01', () => {
     expect(buildReminderContent(profile, '2026-09-01')).toEqual({
-      title: 'Personal day 9 · Let something end',
-      body: 'A 9 day is for completion and release. Close the loop, give it away, and clear space for what is next.',
+      title: 'Personal day 9 · Let Something End',
+      body: 'Today may be well suited to completion and release. You might find it useful to close a loop, let something go, or clear space for what comes next.',
     });
   });
 

@@ -1,13 +1,23 @@
 import {
+  ANNUAL_MESSAGE_POOLS,
   DEFAULT_MESSAGE_POOLS,
+  FOCUS_BY_DAY,
+  MONTHLY_MESSAGE_POOLS,
+  WEEKLY_MESSAGE_POOLS,
   addDays,
+  buildAnnualForecast,
   buildForecast,
   buildForecastRange,
+  buildMonthlyForecast,
+  buildWeeklyForecast,
+  dayWatchFor,
   personalDay,
   personalMonth,
   personalNumbers,
+  personalWeek,
   personalYear,
   stableIndex,
+  weekBounds,
 } from '../../src/core/forecast';
 import type { ForecastFocus, Profile } from '../../src/core/types';
 
@@ -111,8 +121,8 @@ describe('buildForecast', () => {
       personalYear: 8,
       personalMonth: 8,
       personalDay: 9,
-      headline: 'Let something end',
-      body: 'A 9 day is for completion and release. Close the loop, give it away, and clear space for what is next.',
+      headline: 'Let Something End',
+      body: 'Today may be well suited to completion and release. You might find it useful to close a loop, let something go, or clear space for what comes next.',
       luckyNumber: 4,
       focus: 'rest',
     });
@@ -126,8 +136,8 @@ describe('buildForecast', () => {
       personalYear: 2,
       personalMonth: 2,
       personalDay: 3,
-      headline: 'Say it out loud',
-      body: 'A 3 day lifts expression and play. Share the idea, send the message, make something for the joy of it.',
+      headline: 'Say It Out Loud',
+      body: 'Today may be a good time to communicate an idea, have an open conversation, or spend time on something creative. Choose one thing you want to express and give it some attention.',
       luckyNumber: 1,
       focus: 'create',
     });
@@ -250,6 +260,240 @@ describe('addDays', () => {
 
   test('invalid date throws RangeError', () => {
     expect(() => addDays('nope', 1)).toThrow(RangeError);
+  });
+});
+
+describe('weekBounds', () => {
+  test('normal week: 2026-09-29 (Tue) -> Sun 2026-09-27 through Sat 2026-10-03', () => {
+    expect(weekBounds('2026-09-29')).toEqual({
+      weekStart: '2026-09-27',
+      weekEnd: '2026-10-03',
+    });
+  });
+
+  test('a Sunday returns itself as weekStart', () => {
+    expect(weekBounds('2026-09-27')).toEqual({
+      weekStart: '2026-09-27',
+      weekEnd: '2026-10-03',
+    });
+  });
+
+  test('a Saturday returns the preceding Sunday and itself as weekEnd', () => {
+    expect(weekBounds('2026-10-03')).toEqual({
+      weekStart: '2026-09-27',
+      weekEnd: '2026-10-03',
+    });
+  });
+
+  test('month boundary: week of 2026-08-31 spans August into September', () => {
+    expect(weekBounds('2026-08-31')).toEqual({
+      weekStart: '2026-08-30',
+      weekEnd: '2026-09-05',
+    });
+  });
+
+  test('year boundary: week of 2026-12-30 spans 2026 into 2027', () => {
+    expect(weekBounds('2026-12-30')).toEqual({
+      weekStart: '2026-12-27',
+      weekEnd: '2027-01-02',
+    });
+  });
+
+  test('invariant: weekStart is always a Sunday, weekEnd always a Saturday, 6 days apart', () => {
+    for (let i = 0; i < 30; i += 1) {
+      const iso = addDays('2026-01-01', i * 11);
+      const { weekStart, weekEnd } = weekBounds(iso);
+      expect(weekBounds(weekStart).weekStart).toBe(weekStart);
+      expect(weekBounds(weekEnd).weekEnd).toBe(weekEnd);
+      expect(addDays(weekStart, 6)).toBe(weekEnd);
+    }
+  });
+
+  test('is deterministic', () => {
+    expect(weekBounds('2026-09-29')).toEqual(weekBounds('2026-09-29'));
+  });
+
+  test('invalid date throws RangeError', () => {
+    expect(() => weekBounds('nope')).toThrow(RangeError);
+  });
+});
+
+describe('personalWeek', () => {
+  const dob = '1990-01-15';
+
+  test('agreed example: DOB 1990-01-15, week 2026-09-27..2026-10-03 -> sum 26 -> Personal Week 8', () => {
+    const { weekStart } = weekBounds('2026-09-29');
+    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    expect(days.map((d) => personalDay(dob, d))).toEqual([8, 9, 1, 2, 1, 2, 3]);
+    expect(days.reduce((sum, d) => sum + personalDay(dob, d), 0)).toBe(26);
+    expect(personalWeek(dob, '2026-09-29')).toBe(8);
+  });
+
+  test('month boundary: week of 2026-08-31 spans August into September', () => {
+    // days: 2026-08-30..2026-09-05, personalDay values [1,2,9,1,2,3,4], sum 22 -> 4
+    expect(personalWeek(dob, '2026-08-31')).toBe(4);
+  });
+
+  test('year boundary: week of 2026-12-30 spans 2026 into 2027', () => {
+    // days: 2026-12-27..2027-01-02, personalDay values [2,3,4,5,6,2,3], sum 25 -> 7
+    expect(personalWeek(dob, '2026-12-30')).toBe(7);
+  });
+
+  test('every date within the same Sunday-Saturday week returns the same Personal Week number', () => {
+    const { weekStart } = weekBounds('2026-09-29');
+    const results = Array.from({ length: 7 }, (_, i) => personalWeek(dob, addDays(weekStart, i)));
+    expect(new Set(results).size).toBe(1);
+    expect(results[0]).toBe(8);
+  });
+
+  test('is deterministic for the same DOB and week', () => {
+    expect(personalWeek(dob, '2026-09-29')).toBe(personalWeek(dob, '2026-09-29'));
+  });
+
+  test('result is always a single digit 1-9', () => {
+    for (let i = 0; i < 60; i += 1) {
+      const w = personalWeek(dob, addDays('2026-01-01', i * 6));
+      expect(w).toBeGreaterThanOrEqual(1);
+      expect(w).toBeLessThanOrEqual(9);
+    }
+  });
+
+  test('invalid date throws RangeError, matching existing forecast/date validation', () => {
+    expect(() => personalWeek(dob, 'nope')).toThrow(RangeError);
+    expect(() => personalWeek('bad', '2026-09-29')).toThrow(RangeError);
+  });
+});
+
+describe('period message pools (Weekly/Monthly/Annual)', () => {
+  test.each<[string, typeof WEEKLY_MESSAGE_POOLS]>([
+    ['WEEKLY_MESSAGE_POOLS', WEEKLY_MESSAGE_POOLS],
+    ['MONTHLY_MESSAGE_POOLS', MONTHLY_MESSAGE_POOLS],
+    ['ANNUAL_MESSAGE_POOLS', ANNUAL_MESSAGE_POOLS],
+  ])('%s has at least 2 well-formed entries for every digit 1-9', (_name, pool) => {
+    for (let d = 1; d <= 9; d += 1) {
+      const entries = pool[d];
+      expect(Array.isArray(entries)).toBe(true);
+      expect(entries.length).toBeGreaterThanOrEqual(2);
+      for (const entry of entries) {
+        expect(typeof entry.headline).toBe('string');
+        expect(entry.headline.length).toBeGreaterThan(0);
+        expect(typeof entry.body).toBe('string');
+        expect(entry.body.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe('buildWeeklyForecast', () => {
+  const p = profile({ dob: '1990-01-15' });
+
+  test('primaryNumber matches personalWeek; content comes from WEEKLY_MESSAGE_POOLS', () => {
+    const f = buildWeeklyForecast(p, '2026-09-29');
+    expect(f.primaryNumber).toBe(personalWeek(p.dob, '2026-09-29'));
+    expect(f.primaryNumber).toBe(8);
+    const pool = WEEKLY_MESSAGE_POOLS[f.primaryNumber];
+    expect(pool.some((e) => e.headline === f.headline && e.body === f.body)).toBe(true);
+    expect(pool.some((e) => e.headline === f.themeHeadline && e.body === f.themeBody)).toBe(true);
+  });
+
+  test('headline/body and themeHeadline/themeBody are distinct entries', () => {
+    for (const iso of ['2026-01-05', '2026-06-18', '2026-11-30']) {
+      const f = buildWeeklyForecast(p, iso);
+      expect(f.themeHeadline).not.toBe(f.headline);
+    }
+  });
+
+  test('focus is derived from FOCUS_BY_DAY for the Personal Week digit', () => {
+    const f = buildWeeklyForecast(p, '2026-09-29');
+    expect(f.focus).toBe(FOCUS_BY_DAY[f.primaryNumber]);
+  });
+
+  test('every date within the same Sunday-Saturday week yields identical content', () => {
+    const { weekStart } = weekBounds('2026-09-29');
+    const results = Array.from({ length: 7 }, (_, i) => buildWeeklyForecast(p, addDays(weekStart, i)));
+    expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1);
+  });
+
+  test('month boundary: week of 2026-08-31 spans August into September', () => {
+    const f = buildWeeklyForecast(p, '2026-08-31');
+    expect(f.primaryNumber).toBe(4);
+  });
+
+  test('year boundary: week of 2026-12-30 spans 2026 into 2027', () => {
+    const f = buildWeeklyForecast(p, '2026-12-30');
+    expect(f.primaryNumber).toBe(7);
+  });
+
+  test('is deterministic', () => {
+    expect(buildWeeklyForecast(p, '2026-09-29')).toEqual(buildWeeklyForecast(p, '2026-09-29'));
+  });
+});
+
+describe('buildMonthlyForecast', () => {
+  const p = profile({ dob: '1990-01-15' });
+
+  test('primaryNumber matches personalMonth; content comes from MONTHLY_MESSAGE_POOLS', () => {
+    const f = buildMonthlyForecast(p, '2026-09-29');
+    expect(f.primaryNumber).toBe(personalMonth(p.dob, '2026-09-29'));
+    const pool = MONTHLY_MESSAGE_POOLS[f.primaryNumber];
+    expect(pool.some((e) => e.headline === f.headline && e.body === f.body)).toBe(true);
+    expect(f.themeHeadline).not.toBe(f.headline);
+  });
+
+  test('every date within the same calendar month yields identical content', () => {
+    const results = ['2026-09-01', '2026-09-15', '2026-09-30'].map((d) => buildMonthlyForecast(p, d));
+    expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1);
+  });
+
+  test('is deterministic', () => {
+    expect(buildMonthlyForecast(p, '2026-09-29')).toEqual(buildMonthlyForecast(p, '2026-09-29'));
+  });
+});
+
+describe('buildAnnualForecast', () => {
+  const p = profile({ dob: '1990-01-15' });
+
+  test('primaryNumber matches personalYear; content comes from ANNUAL_MESSAGE_POOLS', () => {
+    const f = buildAnnualForecast(p, '2026-09-29');
+    expect(f.primaryNumber).toBe(personalYear(p.dob, '2026-09-29'));
+    const pool = ANNUAL_MESSAGE_POOLS[f.primaryNumber];
+    expect(pool.some((e) => e.headline === f.headline && e.body === f.body)).toBe(true);
+    expect(f.themeHeadline).not.toBe(f.headline);
+  });
+
+  test('every date within the same calendar year yields identical content', () => {
+    const results = ['2026-01-01', '2026-06-15', '2026-12-31'].map((d) => buildAnnualForecast(p, d));
+    expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1);
+  });
+
+  test('is deterministic', () => {
+    expect(buildAnnualForecast(p, '2026-09-29')).toEqual(buildAnnualForecast(p, '2026-09-29'));
+  });
+});
+
+describe('dayWatchFor', () => {
+  const p = profile({ dob: '1990-01-15' });
+
+  test('returns a distinct entry from the same personal day pool used by buildForecast', () => {
+    const iso = '2026-09-01';
+    const forecast = buildForecast(p, iso);
+    const watch = dayWatchFor(p, iso);
+    const pool = DEFAULT_MESSAGE_POOLS[forecast.personalDay];
+    expect(pool.some((e) => e.headline === watch.headline && e.body === watch.body)).toBe(true);
+    expect(watch.headline).not.toBe(forecast.headline);
+  });
+
+  test('is deterministic', () => {
+    expect(dayWatchFor(p, '2026-09-01')).toEqual(dayWatchFor(p, '2026-09-01'));
+  });
+
+  test('stays distinct from the primary entry across a range of dates', () => {
+    for (let i = 0; i < 30; i += 1) {
+      const iso = addDays('2026-01-01', i);
+      const forecast = buildForecast(p, iso);
+      const watch = dayWatchFor(p, iso);
+      expect(watch.headline).not.toBe(forecast.headline);
+    }
   });
 });
 

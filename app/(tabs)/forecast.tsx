@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,32 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
-import { buildNumerologyReport } from '@/core/numerology';
-import { personalNumbers, buildForecast } from '@/core/forecast';
-import { FOCUS_COPY } from '@/data/interpretations';
+import { useTheme } from '@/ui/theme';
+import {
+  buildAnnualForecast,
+  buildForecast,
+  buildMonthlyForecast,
+  buildWeeklyForecast,
+  dayWatchFor,
+  personalNumbers,
+  personalWeek,
+  weekBounds,
+} from '@/core/forecast';
+import { FOCUS_COPY, explainPersonalNumber, themeClauseFor } from '@/data/interpretations';
+import { formatDateRange, formatMonthYear, formatUSDate, formatYearOnly } from '@/lib/date';
 
-type ForecastTab = 'day' | 'month' | 'year';
+type ForecastTab = 'day' | 'week' | 'month' | 'year';
 
 export default function ForecastScreen() {
+  const theme = useTheme();
   const profileStore = useProfileStore();
   const profile = (profileStore as any).profile;
 
   const [activeTab, setActiveTab] = useState<ForecastTab>('day');
+  const [dayCalcExpanded, setDayCalcExpanded] = useState(false);
+  const [weekCalcExpanded, setWeekCalcExpanded] = useState(false);
+  const [monthCalcExpanded, setMonthCalcExpanded] = useState(false);
+  const [yearCalcExpanded, setYearCalcExpanded] = useState(false);
 
   const activeDob = profile?.dob || '1995-02-18';
   const activeName = profile?.fullName || profile?.name || 'Seeker';
@@ -27,24 +42,6 @@ export default function ForecastScreen() {
 
   // Today's ISO date (YYYY-MM-DD)
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
-  const todayFormatted = useMemo(() => {
-    const [year, month, day] = todayIso.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }, [todayIso]);
-
-  const dobFormatted = useMemo(() => {
-    const [year, month, day] = activeDob.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }, [activeDob]);
 
   const forecastData = useMemo(() => {
     try {
@@ -56,23 +53,43 @@ export default function ForecastScreen() {
         createdAt: profile?.createdAt || new Date().toISOString(),
       };
 
-      const report = buildNumerologyReport(activeProfile);
       const cycles = personalNumbers(activeDob, todayIso);
-      const forecast = buildForecast(activeProfile, todayIso);
+      const weekDigit = personalWeek(activeDob, todayIso);
+      const { weekStart, weekEnd } = weekBounds(todayIso);
 
-      return {
-        report,
-        cycles,
-        forecast,
-      };
+      const day = buildForecast(activeProfile, todayIso);
+      const watchFor = dayWatchFor(activeProfile, todayIso);
+      const week = buildWeeklyForecast(activeProfile, todayIso);
+      const month = buildMonthlyForecast(activeProfile, todayIso);
+      const year = buildAnnualForecast(activeProfile, todayIso);
+
+      return { cycles, weekDigit, weekStart, weekEnd, day, watchFor, week, month, year };
     } catch {
       return null;
     }
   }, [profile, activeName, activeDob, activeSystem, todayIso]);
 
   const cycles = forecastData?.cycles;
-  const forecast = forecastData?.forecast;
-  const report = forecastData?.report;
+  const weekDigit = forecastData?.weekDigit ?? 1;
+  const weekStart = forecastData?.weekStart ?? todayIso;
+  const weekEnd = forecastData?.weekEnd ?? todayIso;
+  const day = forecastData?.day;
+  const watchFor = forecastData?.watchFor;
+  const week = forecastData?.week;
+  const month = forecastData?.month;
+  const year = forecastData?.year;
+
+  const selectTab = (tab: ForecastTab) => {
+    void Haptics.selectionAsync();
+    setActiveTab(tab);
+  };
+
+  const dayExplanation = explainPersonalNumber('day', cycles?.personalDay ?? 1);
+  const weekExplanation = explainPersonalNumber('week', weekDigit);
+  const monthExplanation = explainPersonalNumber('month', cycles?.personalMonth ?? 1);
+  const yearExplanation = explainPersonalNumber('year', cycles?.personalYear ?? 1);
+
+  const luckyNumber = day?.luckyNumber ?? 1;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -82,166 +99,312 @@ export default function ForecastScreen() {
           <Text style={styles.headerSub}>TEMPORAL MATRIX</Text>
           <Text style={styles.headerTitle}>Personal Cycles & Forecast</Text>
           <Text style={styles.headerDate}>
-            {activeName} • Born {dobFormatted}
+            {activeName} • Born {formatUSDate(activeDob)}
           </Text>
           <Text style={styles.headerDate}>
-            Based on today's date — {todayFormatted}, your personal numbers for today are calculated below.
+            Based on today's date — {formatUSDate(todayIso)}, your personal numbers for today are calculated below.
           </Text>
         </View>
 
-        {/* Cycle Numbers Grid */}
+        {/* Period Cards */}
         <View style={styles.cyclesRow}>
-          <View style={[styles.cycleCard, activeTab === 'day' && styles.cycleCardActive]}>
-            <Text style={styles.cycleLabel}>PERSONAL DAY</Text>
+          <TouchableOpacity
+            style={[styles.cycleCard, activeTab === 'day' && styles.cycleCardActive]}
+            onPress={() => selectTab('day')}
+          >
+            <Text style={styles.cycleLabel}>TODAY</Text>
             <Text style={styles.cycleValue}>{cycles?.personalDay ?? 1}</Text>
-          </View>
-          <View style={[styles.cycleCard, activeTab === 'month' && styles.cycleCardActive]}>
-            <Text style={styles.cycleLabel}>PERSONAL MONTH</Text>
-            <Text style={styles.cycleValue}>{cycles?.personalMonth ?? 3}</Text>
-          </View>
-          <View style={[styles.cycleCard, activeTab === 'year' && styles.cycleCardActive]}>
-            <Text style={styles.cycleLabel}>PERSONAL YEAR</Text>
-            <Text style={styles.cycleValue}>{cycles?.personalYear ?? 8}</Text>
-          </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.cycleCard, activeTab === 'week' && styles.cycleCardActive]}
+            onPress={() => selectTab('week')}
+          >
+            <Text style={styles.cycleLabel}>THIS WEEK</Text>
+            <Text style={styles.cycleValue}>{weekDigit}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.cycleCard, activeTab === 'month' && styles.cycleCardActive]}
+            onPress={() => selectTab('month')}
+          >
+            <Text style={styles.cycleLabel}>THIS MONTH</Text>
+            <Text style={styles.cycleValue}>{cycles?.personalMonth ?? 1}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.cycleCard, activeTab === 'year' && styles.cycleCardActive]}
+            onPress={() => selectTab('year')}
+          >
+            <Text style={styles.cycleLabel}>THIS YEAR</Text>
+            <Text style={styles.cycleValue}>{cycles?.personalYear ?? 1}</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Time Horizon Segment Switcher */}
+        {/* Period Switcher */}
         <View style={styles.switcher}>
           <TouchableOpacity
             style={[styles.switchTab, activeTab === 'day' && styles.switchTabActive]}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              setActiveTab('day');
-            }}
+            onPress={() => selectTab('day')}
           >
-            <Text style={[styles.switchText, activeTab === 'day' && styles.switchTextActive]}>
-              Today's Flow
-            </Text>
+            <Text style={[styles.switchText, activeTab === 'day' && styles.switchTextActive]}>Today</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.switchTab, activeTab === 'week' && styles.switchTabActive]}
+            onPress={() => selectTab('week')}
+          >
+            <Text style={[styles.switchText, activeTab === 'week' && styles.switchTextActive]}>This Week</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.switchTab, activeTab === 'month' && styles.switchTabActive]}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              setActiveTab('month');
-            }}
+            onPress={() => selectTab('month')}
           >
-            <Text style={[styles.switchText, activeTab === 'month' && styles.switchTextActive]}>
-              Monthly Focus
-            </Text>
+            <Text style={[styles.switchText, activeTab === 'month' && styles.switchTextActive]}>This Month</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.switchTab, activeTab === 'year' && styles.switchTabActive]}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              setActiveTab('year');
-            }}
+            onPress={() => selectTab('year')}
           >
-            <Text style={[styles.switchText, activeTab === 'year' && styles.switchTextActive]}>
-              Annual Arch
-            </Text>
+            <Text style={[styles.switchText, activeTab === 'year' && styles.switchTextActive]}>This Year</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Dynamic Context Card */}
+        {/* TODAY'S FORECAST */}
         {activeTab === 'day' && (
           <View style={styles.card}>
-            <Text style={styles.cardTheme}>
-              {forecast?.headline}
-            </Text>
-            <Text style={styles.cardBody}>
-              {forecast?.body}
-            </Text>
+            <Text style={styles.periodTitle}>TODAY'S FORECAST</Text>
+            <Text style={styles.periodDate}>{formatUSDate(todayIso)}</Text>
 
             <View style={styles.divider} />
 
-            <Text style={styles.guidelinesTitle}>What this means for you</Text>
-            <Text style={styles.cardBody}>
-              Use the guidance above as a gentle lens for the day ahead — a reflection to keep in mind rather than a fixed outcome.
-            </Text>
+            <Text style={styles.numberStatement}>{dayExplanation.numberStatement}</Text>
+            <Text style={styles.cardBody}>{dayExplanation.represents}</Text>
+            <Text style={styles.explanationLine}>{dayExplanation.whyRelevant}</Text>
+
+            <TouchableOpacity
+              style={styles.expandRow}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setDayCalcExpanded((prev) => !prev);
+              }}
+            >
+              <Text style={styles.expandLabel}>
+                {dayCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
+              </Text>
+            </TouchableOpacity>
+            {dayCalcExpanded && (
+              <Text style={styles.cardBody}>{dayExplanation.howCalculated}</Text>
+            )}
+
+            <View style={styles.divider} />
+
+            <Text style={styles.guidelinesTitle}>Your Day Ahead</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{day?.headline}</Text>
+            <Text style={styles.cardBody}>{day?.body}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>What to Watch For</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{watchFor?.headline}</Text>
+            <Text style={styles.cardBody}>{watchFor?.body}</Text>
 
             <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>
-              Your focus today: {FOCUS_COPY[forecast?.focus ?? 'plan']?.label}
+              Your Focus Today: {FOCUS_COPY[day?.focus ?? 'plan']?.label}
             </Text>
-            <Text style={styles.cardBody}>
-              {FOCUS_COPY[forecast?.focus ?? 'plan']?.hint}
-            </Text>
+            <Text style={styles.cardBody}>{FOCUS_COPY[day?.focus ?? 'plan']?.hint}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Today's Recommendations</Text>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Check the Remedies tab for today's active ritual quest, especially during the morning.
+              </Text>
+            </View>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Use today's focus as a lens for your priorities rather than a fixed rule.
+              </Text>
+            </View>
 
             <View style={styles.divider} />
 
-            <Text style={styles.guidelinesTitle}>Your numbers for today</Text>
-            <Text style={styles.cardBody}>
-              These numbers add context to today's Personal Day.
-            </Text>
-
-            <View style={[styles.metaRow, { marginTop: 10 }]}>
-              <Text style={styles.metaLabel}>Life Path</Text>
-              <Text style={styles.metaVal}>{report?.lifePath ?? 8}</Text>
-            </View>
-            <Text style={styles.guideText}>
-              Your broader life-path number, providing additional context for today's theme.
-            </Text>
-
-            <View style={[styles.metaRow, { marginTop: 10 }]}>
-              <Text style={styles.metaLabel}>Destiny</Text>
-              <Text style={styles.metaVal}>{report?.destiny ?? 4}</Text>
-            </View>
-            <Text style={styles.guideText}>
-              Adds another layer of context to today's reading.
-            </Text>
-
-            <View style={[styles.metaRow, { marginTop: 10 }]}>
-              <Text style={styles.metaLabel}>Lucky Number</Text>
-              <Text style={styles.metaVal}>{forecast?.luckyNumber ?? 7}</Text>
-            </View>
-            <Text style={styles.guideText}>
-              A symbolic number you can use as a personal reminder or reflection point today.
-            </Text>
-
-            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>How to use these numbers</Text>
-            <Text style={styles.cardBody}>
-              Let your Personal Day be your main focus for today. Your Life Path and Destiny numbers provide additional context for how you can approach that theme, while your Lucky Number can be used as a simple personal reminder or reflection point.
+            <Text style={styles.secondaryLabel}>A Number to Reflect On: {luckyNumber}</Text>
+            <Text style={styles.secondaryText}>
+              You can use {luckyNumber} as a simple personal reminder today — for example, choose {luckyNumber} priorities,
+              take {luckyNumber} minutes to reflect, or notice moments involving {themeClauseFor(luckyNumber)}.
             </Text>
           </View>
         )}
 
+        {/* WEEKLY FORECAST */}
+        {activeTab === 'week' && (
+          <View style={styles.card}>
+            <Text style={styles.periodTitle}>WEEKLY FORECAST</Text>
+            <Text style={styles.periodDate}>{formatDateRange(weekStart, weekEnd)}</Text>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.numberStatement}>{weekExplanation.numberStatement}</Text>
+            <Text style={styles.cardBody}>{weekExplanation.represents}</Text>
+            <Text style={styles.explanationLine}>{weekExplanation.whyRelevant}</Text>
+
+            <TouchableOpacity
+              style={styles.expandRow}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setWeekCalcExpanded((prev) => !prev);
+              }}
+            >
+              <Text style={styles.expandLabel}>
+                {weekCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
+              </Text>
+            </TouchableOpacity>
+            {weekCalcExpanded && (
+              <Text style={styles.cardBody}>{weekExplanation.howCalculated}</Text>
+            )}
+
+            <View style={styles.divider} />
+
+            <Text style={styles.guidelinesTitle}>Your Week Ahead</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{week?.headline}</Text>
+            <Text style={styles.cardBody}>{week?.body}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Key Themes This Week</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{week?.themeHeadline}</Text>
+            <Text style={styles.cardBody}>{week?.themeBody}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>
+              Your Focus This Week: {FOCUS_COPY[week?.focus ?? 'plan']?.label}
+            </Text>
+            <Text style={styles.cardBody}>{FOCUS_COPY[week?.focus ?? 'plan']?.hint}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Weekly Recommendations</Text>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Look back at this week's theme as you plan your priorities for the days ahead.
+              </Text>
+            </View>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Notice which day feels most aligned with the week's focus, and build around it.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* MONTHLY FORECAST */}
         {activeTab === 'month' && (
           <View style={styles.card}>
-            <Text style={styles.cardTheme}>
-              Personal Month {cycles?.personalMonth ?? 3}: Monthly Theme
+            <Text style={styles.periodTitle}>MONTHLY FORECAST</Text>
+            <Text style={styles.periodDate}>{formatMonthYear(todayIso).toUpperCase()}</Text>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.numberStatement}>{monthExplanation.numberStatement}</Text>
+            <Text style={styles.cardBody}>{monthExplanation.represents}</Text>
+            <Text style={styles.explanationLine}>{monthExplanation.whyRelevant}</Text>
+
+            <TouchableOpacity
+              style={styles.expandRow}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setMonthCalcExpanded((prev) => !prev);
+              }}
+            >
+              <Text style={styles.expandLabel}>
+                {monthCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
+              </Text>
+            </TouchableOpacity>
+            {monthCalcExpanded && (
+              <Text style={styles.cardBody}>{monthExplanation.howCalculated}</Text>
+            )}
+
+            <View style={styles.divider} />
+
+            <Text style={styles.guidelinesTitle}>Your Month Ahead</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{month?.headline}</Text>
+            <Text style={styles.cardBody}>{month?.body}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Key Themes This Month</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{month?.themeHeadline}</Text>
+            <Text style={styles.cardBody}>{month?.themeBody}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>
+              Your Focus This Month: {FOCUS_COPY[month?.focus ?? 'plan']?.label}
             </Text>
-            <Text style={styles.cardBody}>
-              This month operates under the {cycles?.personalMonth} vibration within your broader Year {cycles?.personalYear} cycle. It serves as an opportune window to harmonize projects, balance communication, and work with your active Lo Shu remedies.
-            </Text>
+            <Text style={styles.cardBody}>{FOCUS_COPY[month?.focus ?? 'plan']?.hint}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Monthly Recommendations</Text>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Use this month's theme to guide bigger decisions rather than day-to-day details.
+              </Text>
+            </View>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Revisit your goals partway through the month to see how they're tracking against this theme.
+              </Text>
+            </View>
           </View>
         )}
 
+        {/* ANNUAL FORECAST */}
         {activeTab === 'year' && (
           <View style={styles.card}>
-            <Text style={styles.cardTheme}>
-              Personal Year {cycles?.personalYear ?? 8}: Master Direction
+            <Text style={styles.periodTitle}>ANNUAL FORECAST</Text>
+            <Text style={styles.periodDate}>{formatYearOnly(todayIso)}</Text>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.numberStatement}>{yearExplanation.numberStatement}</Text>
+            <Text style={styles.cardBody}>{yearExplanation.represents}</Text>
+            <Text style={styles.explanationLine}>{yearExplanation.whyRelevant}</Text>
+
+            <TouchableOpacity
+              style={styles.expandRow}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setYearCalcExpanded((prev) => !prev);
+              }}
+            >
+              <Text style={styles.expandLabel}>
+                {yearCalcExpanded ? '▲ Hide' : '▼ How is this calculated?'}
+              </Text>
+            </TouchableOpacity>
+            {yearCalcExpanded && (
+              <Text style={styles.cardBody}>{yearExplanation.howCalculated}</Text>
+            )}
+
+            <View style={styles.divider} />
+
+            <Text style={styles.guidelinesTitle}>Your Year Ahead</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{year?.headline}</Text>
+            <Text style={styles.cardBody}>{year?.body}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Key Themes This Year</Text>
+            <Text style={[styles.cardTheme, { color: theme.colors.primary }]}>{year?.themeHeadline}</Text>
+            <Text style={styles.cardBody}>{year?.themeBody}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>
+              Your Focus This Year: {FOCUS_COPY[year?.focus ?? 'plan']?.label}
             </Text>
-            <Text style={styles.cardBody}>
-              A Personal Year {cycles?.personalYear} marks a major epoch in your 9-year cycle. This is a season for stepping into authority, establishing structure, and addressing long-standing blockages with disciplined daily rituals.
-            </Text>
+            <Text style={styles.cardBody}>{FOCUS_COPY[year?.focus ?? 'plan']?.hint}</Text>
+
+            <Text style={[styles.guidelinesTitle, { marginTop: 14 }]}>Annual Recommendations</Text>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Let this year's theme inform your longer-term plans rather than daily choices.
+              </Text>
+            </View>
+            <View style={styles.guideRow}>
+              <Text style={styles.guideBullet}>•</Text>
+              <Text style={styles.guideText}>
+                Revisit this theme at the start of each new month to stay oriented.
+              </Text>
+            </View>
           </View>
         )}
-
-        {/* Action Guidelines */}
-        <View style={styles.card}>
-          <Text style={styles.guidelinesTitle}>Energetic Recommendations</Text>
-          <View style={styles.guideRow}>
-            <Text style={styles.guideBullet}>•</Text>
-            <Text style={styles.guideText}>
-              Leverage your active remedy quest in the Remedies tab during optimal morning hours.
-            </Text>
-          </View>
-          <View style={styles.guideRow}>
-            <Text style={styles.guideBullet}>•</Text>
-            <Text style={styles.guideText}>
-              Align agreements and decisions when your Personal Day and Life Path frequencies harmonize.
-            </Text>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -269,7 +432,15 @@ const styles = StyleSheet.create({
     borderColor: '#EDEBE6',
   },
   cycleCardActive: { borderColor: '#5E7563', backgroundColor: '#F3F8F4' },
-  cycleLabel: { fontSize: 8, fontWeight: '800', color: '#8C847E', letterSpacing: 0.5 },
+  cycleLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#8C847E',
+    letterSpacing: 0.5,
+    lineHeight: 11,
+    minHeight: 22,
+    textAlign: 'center',
+  },
   cycleValue: { fontSize: 24, fontWeight: '800', color: '#2C2523', marginTop: 4 },
   switcher: {
     flexDirection: 'row',
@@ -290,14 +461,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EDEBE6',
   },
-  cardTheme: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 8 },
+  periodTitle: { fontSize: 11, fontWeight: '800', color: '#77706A', letterSpacing: 0.8 },
+  periodDate: { fontSize: 18, fontWeight: '800', color: '#2C2523', marginTop: 4 },
+  numberStatement: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 6 },
+  explanationLine: { fontSize: 12, color: '#8C847E', lineHeight: 18, marginTop: 6 },
+  cardTheme: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 8, marginTop: 2 },
   cardBody: { fontSize: 13, color: '#6A625B', lineHeight: 20 },
   divider: { height: 1, backgroundColor: '#F0ECE6', marginVertical: 14 },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4 },
-  metaLabel: { fontSize: 12, color: '#8C847E' },
-  metaVal: { fontSize: 12, fontWeight: '700', color: '#2C2523' },
+  expandRow: { marginTop: 10 },
+  expandLabel: { fontSize: 12, fontWeight: '700', color: '#5E7563' },
   guidelinesTitle: { fontSize: 14, fontWeight: '800', color: '#2C2523', marginBottom: 10 },
   guideRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 4 },
   guideBullet: { fontSize: 14, color: '#5E7563', marginRight: 8, lineHeight: 18 },
   guideText: { fontSize: 12, color: '#6A625B', lineHeight: 18, flex: 1 },
+  secondaryLabel: { fontSize: 12, fontWeight: '700', color: '#8C847E' },
+  secondaryText: { fontSize: 11, color: '#A39C95', lineHeight: 17, marginTop: 4 },
 });
