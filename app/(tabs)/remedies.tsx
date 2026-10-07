@@ -907,14 +907,16 @@ export default function RemediesScreen() {
                   {!todaysFocusDone ? (
                     renderActivityGuide("Why today's practice?", practiceDay.morning.activity, morningEngagement)
                   ) : (
-                    <Text style={styles.focusChoiceConfirmedText}>
-                      Your choice:{' '}
-                      {selectedOptionLabel(
-                        practiceDay.morning.activity,
-                        morningEngagement.selectionFor(practiceDay.morning.activity.id),
-                      ) ?? 'Selected'}{' '}
-                      ✓
-                    </Text>
+                    <View style={[styles.tapButton, styles.tapButtonDone]}>
+                      <Text style={[styles.tapButtonText, styles.tapButtonTextDone]}>
+                        Your choice:{' '}
+                        {selectedOptionLabel(
+                          practiceDay.morning.activity,
+                          morningEngagement.selectionFor(practiceDay.morning.activity.id),
+                        ) ?? 'Selected'}{' '}
+                        ✓
+                      </Text>
+                    </View>
                   )}
                 </>
               )}
