@@ -1098,6 +1098,7 @@ export default function RemediesScreen() {
           {dayFullyComplete && closingComplete && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>💭 How was today's practice?</Text>
+              <Text style={styles.cardSubtitle}>Select all that apply.</Text>
               <View style={styles.optionsWrap}>
                 {DAILY_FEEDBACK_OPTIONS.map((option) => (
                   <TouchableOpacity
