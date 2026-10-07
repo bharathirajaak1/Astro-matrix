@@ -20,35 +20,36 @@ import {
 describe('explainPersonalNumber', () => {
   test('day: states the number and reuses meaningFor() as the theme clause', () => {
     const e = explainPersonalNumber('day', 3);
-    expect(e.numberStatement).toBe('Your Personal Day Number is 3.');
-    expect(e.represents).toBe(
-      'In numerology, this number represents the theme associated with your day today — expression, creativity, and social spark.',
-    );
+    expect(e.numberStatement).toBe('Your Personal Day is 3.');
+    expect(e.represents).toBe('In traditional numerology, 3 is associated with expression, creativity, and social spark.');
     expect(e.whereFrom.length).toBeGreaterThan(0);
-    expect(e.whyRelevant.length).toBeGreaterThan(0);
+    expect(e.whyRelevant).toBe('This gives you a theme to keep in mind as you move through today.');
   });
 
   test('week: explanation makes clear this is an AstroMatrix-defined convention, not a universal standard', () => {
     const e = explainPersonalNumber('week', 7);
-    expect(e.numberStatement).toBe('Your Personal Week Number is 7.');
+    expect(e.numberStatement).toBe('Your Personal Week is 7.');
     expect(e.whereFrom.toLowerCase()).toContain('astromatrix-defined');
     expect(e.whereFrom.toLowerCase()).not.toContain('universal numerology standard.');
+    expect(e.whyRelevant).toBe('This gives you a broader theme to keep in mind throughout the week.');
   });
 
   test('month', () => {
     const e = explainPersonalNumber('month', 1);
-    expect(e.numberStatement).toBe('Your Personal Month Number is 1.');
-    expect(e.represents).toContain('your current month');
+    expect(e.numberStatement).toBe('Your Personal Month is 1.');
+    expect(e.represents).toBe(`In traditional numerology, 1 is associated with ${meaningFor(1).replace(/\.$/, '').toLowerCase()}.`);
+    expect(e.whyRelevant).toBe('This gives you a theme to keep in mind throughout the month.');
   });
 
-  test('year: uses the "broader theme" phrasing', () => {
+  test('year: uses the same simple "In traditional numerology..." phrasing as every other period', () => {
     const e = explainPersonalNumber('year', 1);
-    expect(e.numberStatement).toBe('Your Personal Year Number is 1.');
+    expect(e.numberStatement).toBe('Your Personal Year is 1.');
     expect(e.represents).toBe(
-      `In numerology, this number represents the broader theme associated with your year — ${meaningFor(1)
+      `In traditional numerology, 1 is associated with ${meaningFor(1)
         .replace(/\.$/, '')
         .toLowerCase()}.`,
     );
+    expect(e.whyRelevant).toBe('This gives you a broader theme to carry with you throughout the year.');
   });
 
   test('the theme clause always matches meaningFor(digit), reworded (no separate digit-meaning dictionary)', () => {

@@ -6,7 +6,8 @@ import { buildLoShuGrid } from '@/core/loShu';
 import { buildNumerologyReport } from '@/core/numerology';
 import { generateNumbersSummary, generateLoShuSummary } from '@/core/summaryGenerator';
 import type { NumerologyReport } from '@/core/types';
-import { CORE_NUMBERS, meaningFor } from '@/data/interpretations';
+import { CORE_NUMBERS } from '@/data/interpretations';
+import { getCoreNumberInterpretation, getCoreNumberSummary, type CoreNumberKey } from '@/data/coreNumberContent';
 import { useProfileStore } from '@/features/profile/store';
 import { Card, NumberBadge, Screen, SectionHeader, Txt } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
@@ -19,7 +20,7 @@ import { spacing, useTheme } from '@/ui/theme';
  * digits, no new state. Not yet registered as a tab.
  */
 
-type CoreKey = (typeof CORE_NUMBERS)[number]['key'];
+type CoreKey = CoreNumberKey;
 
 function trailText(report: NumerologyReport, key: CoreKey): string {
   const r = report.reductions;
@@ -33,6 +34,75 @@ function trailText(report: NumerologyReport, key: CoreKey): string {
   return chain.length > 1
     ? chain.join(' -> ')
     : `${chain[0] ?? ''} is already a single digit.`;
+}
+
+/** The shared heading treatment for every Core Number interpretation
+ *  section - noticeably stronger than the surrounding body/caption text
+ *  (heavier weight, wider letter-spacing, the existing `primary` accent
+ *  already used elsewhere on this screen for emphasis, e.g. `NumberBadge`'s
+ *  digit colour) while staying smaller than the card's own `heading`-sized
+ *  title, so it reads as clearly subordinate to it. A thin top border (the
+ *  existing `border` token, nothing new) separates this section from the
+ *  one before it - every section after the first carries one, so a long
+ *  expanded card still reads as a sequence of distinct sections rather
+ *  than one block of text. */
+function SectionDivider({ first }: { first?: boolean }) {
+  const theme = useTheme();
+  if (first) return null;
+  return <View style={{ borderTopWidth: 1, borderTopColor: theme.colors.border, marginTop: spacing.xs }} />;
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <Txt variant="label" color="primary" style={{ fontWeight: '800', letterSpacing: 0.5, fontSize: 13.5 }}>
+      {label}
+    </Txt>
+  );
+}
+
+/** A heading above a short paragraph, used for each of the Core Number
+ *  interpretation sections so they stay easy to scan rather than reading as
+ *  one dense block of text. `muted` keeps "HOW IT IS CALCULATED" visually
+ *  lighter/technical, as it was before this refinement - only the heading
+ *  treatment is new for that section, not its body text. */
+function InterpretationBlock({
+  label,
+  text,
+  first,
+  muted,
+}: {
+  label: string;
+  text: string;
+  first?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <SectionDivider first={first} />
+      <SectionLabel label={label} />
+      <Txt variant={muted ? 'caption' : 'body'} color={muted ? 'textMuted' : 'text'}>
+        {text}
+      </Txt>
+    </View>
+  );
+}
+
+/** Same labeled pattern as `InterpretationBlock`, for the sections that are
+ *  a short bullet list rather than a paragraph. */
+function InterpretationBullets({ label, items }: { label: string; items: string[] }) {
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <SectionDivider />
+      <SectionLabel label={label} />
+      <View style={{ gap: spacing.xs }}>
+        {items.map((item) => (
+          <Txt key={item} variant="body">
+            • {item}
+          </Txt>
+        ))}
+      </View>
+    </View>
+  );
 }
 
 const GRID_ROWS: readonly (readonly number[])[] = [
@@ -122,6 +192,7 @@ export default function BlueprintScreen() {
     report.soulUrge ? 'Soul Urge' : 'Destiny',
   );
   const loShuSummary = generateLoShuSummary(profile.dob);
+  const coreSummary = getCoreNumberSummary(report);
 
   const [dobYear, dobMonth, dobDay] = profile.dob.split('-').map(Number);
   const dobFormatted = new Date(dobYear, dobMonth - 1, dobDay).toLocaleDateString('en-US', {
@@ -148,7 +219,11 @@ export default function BlueprintScreen() {
         {numbersSummary}
       </Txt>
 
-      <SectionHeader title="Core Numbers" subtitle="Your blueprint, in detail" />
+      <SectionHeader
+        title="Core Numbers"
+        subtitle="Your blueprint, in detail"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 18 }}
+      />
       <Txt variant="body">
         Your core numbers are calculated from your name and date of birth, and each one offers a
         different perspective on your personality, strengths, and motivations.
@@ -156,6 +231,7 @@ export default function BlueprintScreen() {
       {CORE_NUMBERS.map(({ key, title, blurb }) => {
         const value = report[key];
         const open = openKey === key;
+        const section = open ? getCoreNumberInterpretation(key, value) : null;
         return (
           <Card
             key={key}
@@ -174,17 +250,15 @@ export default function BlueprintScreen() {
               </View>
             </View>
 
-            {open ? (
-              <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-                <Txt variant="body">{meaningFor(value)}</Txt>
-                <View style={{ gap: 2 }}>
-                  <Txt variant="label" color="textMuted">
-                    HOW IT IS CALCULATED
-                  </Txt>
-                  <Txt variant="caption" color="textMuted">
-                    {trailText(report, key)}
-                  </Txt>
-                </View>
+            {section ? (
+              <View style={{ gap: spacing.lg, marginTop: spacing.sm }}>
+                <InterpretationBlock label="HOW YOUR NUMBER IS CALCULATED" text={trailText(report, key)} first muted />
+                <InterpretationBlock label="WHAT THIS NUMBER REPRESENTS" text={section.represents} />
+                <InterpretationBlock label="YOUR INTERPRETATION" text={section.yourInterpretation} />
+                <InterpretationBullets label="HOW IT MAY SHOW UP" items={section.showsUpAs} />
+                <InterpretationBullets label="NATURAL STRENGTHS" items={section.strengths} />
+                <InterpretationBullets label="THINGS TO BE MINDFUL OF" items={section.mindfulOf} />
+                <InterpretationBlock label="HOW YOU CAN USE THIS INSIGHT" text={section.howToUse} />
               </View>
             ) : (
               <Txt variant="caption" color="primary">
@@ -195,7 +269,20 @@ export default function BlueprintScreen() {
         );
       })}
 
-      <SectionHeader title="Sacred Matrix" subtitle="Your Lo Shu grid" />
+      <SectionHeader
+        title="Your Personal Core Summary"
+        subtitle="How your five numbers fit together"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
+      />
+      <Card>
+        <Txt variant="body">{coreSummary.paragraph}</Txt>
+      </Card>
+
+      <SectionHeader
+        title="Sacred Matrix"
+        subtitle="Your Lo Shu grid"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
+      />
       <Txt variant="body">
         The Lo Shu Grid is a numerology tool based on an ancient Chinese number square. It places
         each digit of your birth date onto this fixed 3×3 pattern, showing how often each number
@@ -241,7 +328,11 @@ export default function BlueprintScreen() {
         {loShuSummary}
       </Txt>
 
-      <SectionHeader title="Planes of Expression" subtitle="Six ways to explore your Lo Shu pattern" />
+      <SectionHeader
+        title="Planes of Expression"
+        subtitle="Six ways to explore your Lo Shu pattern"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
+      />
       <Txt variant="body">
         The six planes group the numbers in your Lo Shu Grid into six areas: thinking, emotions,
         action, planning, persistence, and manifestation. The number of digits present in each
@@ -298,7 +389,11 @@ export default function BlueprintScreen() {
         );
       })}
 
-      <SectionHeader title="Explore Further" subtitle="Dive deeper into your blueprint" />
+      <SectionHeader
+        title="Explore Further"
+        subtitle="Dive deeper into your blueprint"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
+      />
       <Card
         onPress={() => router.push('/onboarding/swot-audit?context=blueprint')}
         accessibilityLabel="Open Personal SWOT"

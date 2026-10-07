@@ -34,15 +34,27 @@ export const profileRepo = {
     return current && current.id === id ? current : null;
   },
 
-  /** Create or update the current profile. Keeps `id` / `createdAt` stable. */
+  /**
+   * Create or update the current profile. Keeps `id` / `createdAt` stable
+   * for an edit to the same person (name/DOB unchanged - e.g. fixing the
+   * numerology system). Generates a new `id` (and `createdAt`) when
+   * `fullName` or `dob` actually changes, since those are this app's
+   * identity signals - everything keyed to the old `id` (e.g. Remedies
+   * ritual progress) should not carry over to what is, in effect, a
+   * different person.
+   */
   async save(input: ProfileInput): Promise<Profile> {
     const existing = await profileRepo.getCurrent();
+    const trimmedName = input.fullName.trim();
+    const identityChanged =
+      !existing || existing.fullName !== trimmedName || existing.dob !== input.dob;
+
     const profile: Profile = {
-      id: existing?.id ?? generateId(),
-      fullName: input.fullName.trim(),
+      id: identityChanged ? generateId() : existing.id,
+      fullName: trimmedName,
       dob: input.dob,
       system: input.system,
-      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      createdAt: identityChanged ? new Date().toISOString() : existing.createdAt,
     };
     await setItem(CURRENT_KEY, profile);
     return profile;

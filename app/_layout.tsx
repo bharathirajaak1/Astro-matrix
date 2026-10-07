@@ -30,6 +30,7 @@ export default function RootLayout() {
   const hydrateEntitlement = useEntitlement((s) => s.hydrate);
   const hydrateThemePreference = useThemePreferenceStore((s) => s.hydrate);
   const hydrateRituals = useRitualStore((s) => s.hydrate);
+  const ritualsHydrated = useRitualStore((s) => s.hydrated);
 
   // Load persisted state on launch
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function RootLayout() {
         hydrateNotifications(currentProfile),
         hydrateEntitlement(),
         hydrateThemePreference(),
-        hydrateRituals(),
+        hydrateRituals(currentProfile),
       ]);
     })();
   }, [hydrateProfile, hydrateNotifications, hydrateEntitlement, hydrateThemePreference, hydrateRituals]);
@@ -53,6 +54,16 @@ export default function RootLayout() {
       void syncNotifications(profile);
     }
   }, [profile, notificationsHydrated, syncNotifications]);
+
+  // Re-check which profile owns the Remedies ritual journey whenever the
+  // active profile changes (e.g. after saving edited/new profile details) -
+  // mirrors the notifications resync effect above. `hydrate()` itself already
+  // decides preserve-vs-reset by comparing the stored profileId.
+  useEffect(() => {
+    if (ritualsHydrated) {
+      void hydrateRituals(profile);
+    }
+  }, [profile, ritualsHydrated, hydrateRituals]);
 
   // Re-schedule on app foreground
   useEffect(() => {

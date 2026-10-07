@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { useTheme } from '@/ui/theme';
+import { buildNumerologyReport } from '@/core/numerology';
 import {
   buildAnnualForecast,
   buildForecast,
@@ -33,6 +34,7 @@ import {
   explainYearCalculation,
   themeClauseFor,
 } from '@/data/interpretations';
+import { forecastBlueprintContext } from '@/data/forecastContext';
 import { formatDateRange, formatMonthYear, formatUSDate, formatYearOnly } from '@/lib/date';
 
 type ForecastTab = 'day' | 'week' | 'month' | 'year';
@@ -80,6 +82,30 @@ export default function ForecastScreen() {
       return null;
     }
   }, [profile, activeName, activeDob, activeSystem, todayIso]);
+
+  // Canonical NumerologyReport, built the same way every other screen
+  // (Blueprint, Home, SWOT) already does - never recalculated here, and
+  // `null` (not a fabricated fallback) when there's no real profile yet.
+  const report = useMemo(
+    () => (profile ? buildNumerologyReport(profile) : null),
+    [profile],
+  );
+  const todaySoulUrgeContext = useMemo(
+    () => forecastBlueprintContext(report, 'day'),
+    [report],
+  );
+  const weekPersonalityContext = useMemo(
+    () => forecastBlueprintContext(report, 'week'),
+    [report],
+  );
+  const monthDestinyContext = useMemo(
+    () => forecastBlueprintContext(report, 'month'),
+    [report],
+  );
+  const yearLifePathContext = useMemo(
+    () => forecastBlueprintContext(report, 'year'),
+    [report],
+  );
 
   const cycles = forecastData?.cycles;
   const weekDigit = forecastData?.weekDigit ?? 1;
@@ -194,6 +220,9 @@ export default function ForecastScreen() {
             <Text style={styles.numberStatement}>{dayExplanation.numberStatement}</Text>
             <Text style={styles.cardBody}>{dayExplanation.represents}</Text>
             <Text style={styles.explanationLine}>{dayExplanation.whyRelevant}</Text>
+            {todaySoulUrgeContext && (
+              <Text style={styles.explanationLine}>{todaySoulUrgeContext}</Text>
+            )}
 
             <TouchableOpacity
               style={styles.expandRow}
@@ -229,13 +258,13 @@ export default function ForecastScreen() {
             <View style={styles.guideRow}>
               <Text style={styles.guideBullet}>•</Text>
               <Text style={styles.guideText}>
-                Check the Remedies tab for today's active ritual quest, especially during the morning.
+                Check the Remedies tab for today's recommended practice, especially during the morning.
               </Text>
             </View>
             <View style={styles.guideRow}>
               <Text style={styles.guideBullet}>•</Text>
               <Text style={styles.guideText}>
-                Use today's focus as a lens for your priorities rather than a fixed rule.
+                Use today's focus as a guide for your priorities rather than a fixed rule.
               </Text>
             </View>
 
@@ -243,8 +272,9 @@ export default function ForecastScreen() {
 
             <Text style={styles.secondaryLabel}>A Number to Reflect On: {luckyNumber}</Text>
             <Text style={styles.secondaryText}>
-              You can use {luckyNumber} as a simple personal reminder today — for example, choose {luckyNumber} priorities,
-              take {luckyNumber} minutes to reflect, or notice moments involving {themeClauseFor(luckyNumber)}.
+              You can use {luckyNumber} as a simple personal reminder today — for example, choose {luckyNumber}{' '}
+              {luckyNumber === 1 ? 'priority' : 'priorities'}, take {luckyNumber} {luckyNumber === 1 ? 'minute' : 'minutes'} to
+              reflect, or notice moments involving {themeClauseFor(luckyNumber)}.
             </Text>
           </View>
         )}
@@ -260,6 +290,9 @@ export default function ForecastScreen() {
             <Text style={styles.numberStatement}>{weekExplanation.numberStatement}</Text>
             <Text style={styles.cardBody}>{weekExplanation.represents}</Text>
             <Text style={styles.explanationLine}>{weekExplanation.whyRelevant}</Text>
+            {weekPersonalityContext && (
+              <Text style={styles.explanationLine}>{weekPersonalityContext}</Text>
+            )}
 
             <TouchableOpacity
               style={styles.expandRow}
@@ -318,6 +351,9 @@ export default function ForecastScreen() {
             <Text style={styles.numberStatement}>{monthExplanation.numberStatement}</Text>
             <Text style={styles.cardBody}>{monthExplanation.represents}</Text>
             <Text style={styles.explanationLine}>{monthExplanation.whyRelevant}</Text>
+            {monthDestinyContext && (
+              <Text style={styles.explanationLine}>{monthDestinyContext}</Text>
+            )}
 
             <TouchableOpacity
               style={styles.expandRow}
@@ -376,6 +412,9 @@ export default function ForecastScreen() {
             <Text style={styles.numberStatement}>{yearExplanation.numberStatement}</Text>
             <Text style={styles.cardBody}>{yearExplanation.represents}</Text>
             <Text style={styles.explanationLine}>{yearExplanation.whyRelevant}</Text>
+            {yearLifePathContext && (
+              <Text style={styles.explanationLine}>{yearLifePathContext}</Text>
+            )}
 
             <TouchableOpacity
               style={styles.expandRow}
@@ -436,7 +475,7 @@ const styles = StyleSheet.create({
   header: { marginBottom: 18 },
   headerSub: { fontSize: 11, fontWeight: '800', color: '#77706A', letterSpacing: 0.8 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#2C2523', marginTop: 4 },
-  headerDate: { fontSize: 12, color: '#8C847E', marginTop: 4 },
+  headerDate: { fontSize: 12, color: '#5F5A55', marginTop: 4 },
   cyclesRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   cycleCard: {
     flex: 1,
@@ -481,16 +520,16 @@ const styles = StyleSheet.create({
   periodTitle: { fontSize: 11, fontWeight: '800', color: '#77706A', letterSpacing: 0.8 },
   periodDate: { fontSize: 18, fontWeight: '800', color: '#2C2523', marginTop: 4 },
   numberStatement: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 6 },
-  explanationLine: { fontSize: 12, color: '#8C847E', lineHeight: 18, marginTop: 6 },
+  explanationLine: { fontSize: 12, color: '#5F5A55', lineHeight: 18, marginTop: 6 },
   cardTheme: { fontSize: 13, fontWeight: '800', color: '#2C2523', marginBottom: 8, marginTop: 2 },
-  cardBody: { fontSize: 13, color: '#6A625B', lineHeight: 20 },
+  cardBody: { fontSize: 13, color: '#5F5A55', lineHeight: 20 },
   divider: { height: 1, backgroundColor: '#F0ECE6', marginVertical: 14 },
   expandRow: { marginTop: 10 },
   expandLabel: { fontSize: 12, fontWeight: '700' },
   guidelinesTitle: { fontSize: 14, fontWeight: '800', color: '#2C2523', marginBottom: 10 },
   guideRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 4 },
   guideBullet: { fontSize: 14, color: '#5E7563', marginRight: 8, lineHeight: 18 },
-  guideText: { fontSize: 12, color: '#6A625B', lineHeight: 18, flex: 1 },
-  secondaryLabel: { fontSize: 12, fontWeight: '700', color: '#8C847E' },
-  secondaryText: { fontSize: 11, color: '#A39C95', lineHeight: 17, marginTop: 4 },
+  guideText: { fontSize: 12, color: '#5F5A55', lineHeight: 18, flex: 1 },
+  secondaryLabel: { fontSize: 12, fontWeight: '700', color: '#77706A' },
+  secondaryText: { fontSize: 11, color: '#5F5A55', lineHeight: 17, marginTop: 4 },
 });

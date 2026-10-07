@@ -147,12 +147,12 @@ export default function HomeScreen() {
 
       <SectionHeader title="Today's Guidance" subtitle={`Personal Day ${forecast.personalDay}`} />
       <Card onPress={() => router.push('/(tabs)/forecast')} accessibilityLabel="Open Forecast">
-        <Txt variant="heading">{forecast.headline}</Txt>
+        <Txt variant="heading" color="primary">{forecast.headline}</Txt>
         <Txt variant="body" color="textMuted">
           {forecast.body}
         </Txt>
         <Txt variant="caption" color="textMuted">
-          Lucky number: {forecast.luckyNumber}
+          A number to reflect on: {forecast.luckyNumber}
         </Txt>
         <Txt variant="caption" color="primary">View full forecast →</Txt>
       </Card>

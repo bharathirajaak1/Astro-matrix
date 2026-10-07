@@ -91,9 +91,9 @@ export const FOCUS_COPY: Record<string, { label: string; hint: string }> = {
 export type ForecastPeriod = 'day' | 'week' | 'month' | 'year';
 
 export interface PeriodExplanation {
-  /** "Your Personal Week Number is 7." */
+  /** "Your Personal Week is 7." */
   numberStatement: string;
-  /** "In numerology, this number represents ... — <theme>." */
+  /** "In traditional numerology, <digit> is associated with <theme>." */
   represents: string;
   /** Where the number comes from - what it's calculated from. */
   whereFrom: string;
@@ -115,49 +115,45 @@ export function themeClauseFor(digit: number): string {
 
 const PERIOD_EXPLANATION_COPY: Record<
   ForecastPeriod,
-  { numberLabel: string; representsTimeframe: string; whereFrom: string; whyRelevant: string }
+  { numberLabel: string; whereFrom: string; whyRelevant: string }
 > = {
   day: {
     numberLabel: 'Personal Day',
-    representsTimeframe: 'your day today',
     whereFrom: "Your Personal Day Number is calculated from today's date together with your Personal Month Number and Personal Year Number.",
-    whyRelevant: 'It sets a theme for how today may feel and what kind of activities it may suit.',
+    whyRelevant: 'This gives you a theme to keep in mind as you move through today.',
   },
   week: {
     numberLabel: 'Personal Week',
-    representsTimeframe: 'your current week',
     whereFrom:
       'This is an AstroMatrix-defined weekly cycle, not a universal numerology standard - it adds together the Personal Day number for each of the 7 days in this Sunday-Saturday week and reduces the total to a single digit.',
-    whyRelevant: 'It sets a broader theme for the week as a whole, beyond any single day.',
+    whyRelevant: 'This gives you a broader theme to keep in mind throughout the week.',
   },
   month: {
     numberLabel: 'Personal Month',
-    representsTimeframe: 'your current month',
     whereFrom: 'Your Personal Month Number is calculated from your Personal Year Number together with the current calendar month.',
-    whyRelevant: 'It sets a broader theme running through this month.',
+    whyRelevant: 'This gives you a theme to keep in mind throughout the month.',
   },
   year: {
     numberLabel: 'Personal Year',
-    representsTimeframe: 'your year',
     whereFrom: 'Your Personal Year Number is calculated from your date of birth together with the current calendar year.',
-    whyRelevant: 'It sets a long-term theme for your year as a whole.',
+    whyRelevant: 'This gives you a broader theme to carry with you throughout the year.',
   },
 };
 
 /**
  * Build the "what is it / where from / what does it represent / why
- * relevant" explanation for a forecast period's primary number.
+ * relevant" explanation for a forecast period's primary number. `represents`
+ * uses a single, simple "In traditional numerology, <digit> is associated
+ * with <theme>" sentence for every period, rather than naming the specific
+ * timeframe inline - the surrounding UI already makes clear which period
+ * this is for.
  */
 export function explainPersonalNumber(period: ForecastPeriod, digit: number): PeriodExplanation {
   const copy = PERIOD_EXPLANATION_COPY[period];
-  const representsPrefix =
-    period === 'year'
-      ? 'In numerology, this number represents the broader theme associated with'
-      : 'In numerology, this number represents the theme associated with';
 
   return {
-    numberStatement: `Your ${copy.numberLabel} Number is ${digit}.`,
-    represents: `${representsPrefix} ${copy.representsTimeframe} — ${themeClauseFor(digit)}.`,
+    numberStatement: `Your ${copy.numberLabel} is ${digit}.`,
+    represents: `In traditional numerology, ${digit} is associated with ${themeClauseFor(digit)}.`,
     whereFrom: copy.whereFrom,
     whyRelevant: copy.whyRelevant,
   };
