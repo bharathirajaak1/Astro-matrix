@@ -2,15 +2,20 @@ import { useMemo, useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { buildLoShuGrid } from '@/core/loShu';
+import { buildLoShuGrid, LO_SHU_LAYOUT } from '@/core/loShu';
 import { buildNumerologyReport } from '@/core/numerology';
 import { generateNumbersSummary, generateLoShuSummary } from '@/core/summaryGenerator';
+import {
+  getAllExpressionPlanePresence,
+  type ExpressionPlaneId,
+  type ExpressionPlanePresence,
+} from '@/core/expressionPlanes';
 import type { NumerologyReport } from '@/core/types';
 import { CORE_NUMBERS } from '@/data/interpretations';
 import { getCoreNumberInterpretation, getCoreNumberSummary, type CoreNumberKey } from '@/data/coreNumberContent';
 import { useProfileStore } from '@/features/profile/store';
 import { Card, NumberBadge, Screen, SectionHeader, Txt } from '@/ui/components';
-import { spacing, useTheme } from '@/ui/theme';
+import { radius, spacing, useTheme } from '@/ui/theme';
 
 /**
  * Dashboard foundation: a persistent Blueprint screen consolidating the
@@ -105,64 +110,96 @@ function InterpretationBullets({ label, items }: { label: string; items: string[
   );
 }
 
-const GRID_ROWS: readonly (readonly number[])[] = [
-  [4, 9, 2],
-  [3, 5, 7],
-  [8, 1, 6],
-];
-
-interface PlaneInfo {
-  friendlyName: string;
-  subtitle: string;
-  description: string;
-  icon: string;
-  numbers: readonly number[];
-}
-
-const PLANES: readonly PlaneInfo[] = [
-  {
-    friendlyName: 'Mind & Logic',
+/** Blueprint-only presentation metadata for each canonical Expression
+ *  Plane (src/core/expressionPlanes.ts) - icon/subtitle/description text
+ *  that has no equivalent in the canonical model and belongs here, not in
+ *  a second Plane/numbers definition. Keyed by the canonical Plane id so
+ *  it can never drift out of sync with which numbers a Plane actually
+ *  represents; names, numbers, and presence all come from the canonical
+ *  module itself. */
+const PLANE_PRESENTATION: Record<ExpressionPlaneId, { icon: string; subtitle: string; description: string }> = {
+  mindLogic: {
+    icon: '🧠',
     subtitle: 'Intellect & memory',
     description: 'Your analytical thinking, memory, and cognitive agility.',
-    icon: '🧠',
-    numbers: [4, 9, 2],
   },
-  {
-    friendlyName: 'Heart & Intuition',
+  heartIntuition: {
+    icon: '💖',
     subtitle: 'Empathy & feelings',
     description: 'Your empathy, spiritual attunement, feelings, and emotional resilience.',
-    icon: '💖',
-    numbers: [3, 5, 7],
   },
-  {
-    friendlyName: 'Action & Grounding',
+  actionGrounding: {
+    icon: '🌱',
     subtitle: 'Execution & discipline',
     description: 'Your physical endurance, discipline, material mastery, and everyday habits.',
-    icon: '🌱',
-    numbers: [8, 1, 6],
   },
-  {
-    friendlyName: 'Vision & Planning',
+  visionPlanning: {
+    icon: '🔭',
     subtitle: 'Ideas & strategy',
     description: 'Your ability to come up with ideas, plan ahead, and structure your approach.',
-    icon: '🔭',
-    numbers: [4, 3, 8],
   },
-  {
-    friendlyName: 'Drive & Persistence',
+  drivePersistence: {
+    icon: '⚡',
     subtitle: 'Focus & resolve',
     description: 'Your inner persistence, focus, and grit to complete objectives.',
-    icon: '⚡',
-    numbers: [9, 5, 1],
   },
-  {
-    friendlyName: 'Manifestation',
+  manifestation: {
+    icon: '🏃',
     subtitle: 'Decisive movement',
     description: 'Your ability to turn ideas into visible results, and to follow through until something becomes real.',
-    icon: '🏃',
-    numbers: [2, 7, 6],
   },
-];
+};
+
+/** A small, fixed-size 3x3 Lo Shu mini-grid for one Plane card - always
+ *  built from the canonical `LO_SHU_LAYOUT` (never a second hardcoded
+ *  digit grid). Three visual states per cell, using only existing theme
+ *  tokens: a cell outside this Plane is neutral/subdued; a Plane cell
+ *  whose digit is present gets the strong filled look; a Plane cell whose
+ *  digit is missing gets a muted but still Plane-colored outline, visually
+ *  between the other two. No text beyond the digit itself. */
+function PlaneMiniGrid({ presence }: { presence: ExpressionPlanePresence }) {
+  const theme = useTheme();
+  const { plane, presentNumbers } = presence;
+
+  return (
+    <View style={{ width: 68, height: 68, gap: spacing.xs }}>
+      {LO_SHU_LAYOUT.map((row, rowIndex) => (
+        <View key={rowIndex} style={{ flex: 1, flexDirection: 'row', gap: spacing.xs }}>
+          {row.map((digit, colIndex) => {
+            const belongsToPlane = plane.cells.some((cell) => cell.row === rowIndex && cell.col === colIndex);
+            const isPresent = belongsToPlane && presentNumbers.includes(digit);
+            return (
+              <View
+                key={digit}
+                style={{
+                  flex: 1,
+                  borderRadius: radius.sm,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: belongsToPlane && isPresent ? 2 : 1,
+                  borderColor: belongsToPlane ? theme.colors.primary : theme.colors.border,
+                  backgroundColor: belongsToPlane
+                    ? isPresent
+                      ? theme.colors.primarySoft
+                      : theme.colors.surface
+                    : theme.colors.surfaceAlt,
+                }}
+              >
+                <Txt
+                  variant="caption"
+                  color={belongsToPlane && isPresent ? 'primary' : 'textMuted'}
+                  style={belongsToPlane && isPresent ? { fontWeight: '700' } : undefined}
+                >
+                  {digit}
+                </Txt>
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function BlueprintScreen() {
   const theme = useTheme();
@@ -193,6 +230,7 @@ export default function BlueprintScreen() {
   );
   const loShuSummary = generateLoShuSummary(profile.dob);
   const coreSummary = getCoreNumberSummary(report);
+  const planePresences = getAllExpressionPlanePresence(loShu.counts);
 
   const [dobYear, dobMonth, dobDay] = profile.dob.split('-').map(Number);
   const dobFormatted = new Date(dobYear, dobMonth - 1, dobDay).toLocaleDateString('en-US', {
@@ -291,7 +329,7 @@ export default function BlueprintScreen() {
       </Txt>
       <Card>
         <View style={{ gap: spacing.sm }}>
-          {GRID_ROWS.map((row, rowIndex) => (
+          {LO_SHU_LAYOUT.map((row, rowIndex) => (
             <View key={rowIndex} style={{ flexDirection: 'row', gap: spacing.sm }}>
               {row.map((digit) => {
                 const count = counts[digit] || 0;
@@ -338,25 +376,37 @@ export default function BlueprintScreen() {
         action, planning, persistence, and manifestation. The number of digits present in each
         group gives you a simple view of how represented that area is in your birth-date pattern.
       </Txt>
-      {PLANES.map((plane) => {
-        const activeCount = plane.numbers.filter((num) => (counts[num] || 0) > 0).length;
+      <View style={{ gap: spacing.xs, marginTop: spacing.xs }}>
+        <Txt variant="label" color="textMuted" style={{ fontWeight: '700' }}>
+          How to read the mini-grids
+        </Txt>
+        <Txt variant="caption" color="textMuted">
+          Each mini-grid highlights the three numbers that form that Plane. A stronger highlight
+          means the number is present in your birth date; a softer highlight means it isn't.
+          Numbers outside the Plane are shown neutrally.
+        </Txt>
+      </View>
+      {planePresences.map((presence) => {
+        const { plane, presentCount } = presence;
+        const presentation = PLANE_PRESENTATION[plane.id];
         const total = plane.numbers.length;
         const statusText =
-          activeCount === 0
+          presentCount === 0
             ? '🌱 None of the 3 numbers present'
-            : activeCount === total
+            : presentCount === total
               ? '✨ All 3 numbers present'
-              : `🌿 ${activeCount} of ${total} numbers present`;
+              : `🌿 ${presentCount} of ${total} numbers present`;
         return (
-          <Card key={plane.friendlyName}>
+          <Card key={plane.id}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-              <Txt variant="heading">{plane.icon}</Txt>
+              <Txt variant="heading">{presentation.icon}</Txt>
               <View style={{ flex: 1 }}>
-                <Txt variant="heading">{plane.friendlyName}</Txt>
+                <Txt variant="heading">{plane.name}</Txt>
                 <Txt variant="caption" color="textMuted">
-                  {plane.subtitle}
+                  {presentation.subtitle}
                 </Txt>
               </View>
+              <PlaneMiniGrid presence={presence} />
             </View>
             <Txt
               variant="caption"
@@ -365,8 +415,8 @@ export default function BlueprintScreen() {
             >
               {statusText}
             </Txt>
-            <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.sm }}>
-              {plane.description}
+            <Txt variant="body" color="text" style={{ marginTop: spacing.sm }}>
+              {presentation.description}
             </Txt>
             <View
               style={{
@@ -380,8 +430,8 @@ export default function BlueprintScreen() {
               <View
                 style={{
                   height: '100%',
-                  width: `${(activeCount / total) * 100}%`,
-                  backgroundColor: activeCount === total ? theme.colors.primary : theme.colors.accent,
+                  width: `${(presentCount / total) * 100}%`,
+                  backgroundColor: presentCount === total ? theme.colors.primary : theme.colors.accent,
                 }}
               />
             </View>
