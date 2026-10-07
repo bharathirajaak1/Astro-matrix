@@ -1,4 +1,6 @@
 import { buildLoShuGrid } from './loShu';
+import { getAllExpressionPlanePresence, type ExpressionPlaneId } from './expressionPlanes';
+import type { Digit } from './types';
 
 // Time-of-day contextual greeting
 export const getTimeOfDayGreeting = (name?: string): string => {
@@ -47,21 +49,28 @@ export const generateNumbersSummary = (
   return `You ${lp.verb} with ${lp.trait} (Life Path ${lifePath}) and ${sec.verb} with ${sec.trait} (${secondLabel} ${secondNumber}).`;
 };
 
-// Lo Shu Grid Plane mapping
-interface PlaneDefinition {
-  name: string;
-  numbers: number[];
-  strengthText: string;
-}
-
-const LO_SHU_PLANES: PlaneDefinition[] = [
-  { name: 'Drive & Persistence', numbers: [9, 5, 1], strengthText: 'exceptional willpower' },
-  { name: 'Mind & Logic', numbers: [4, 9, 2], strengthText: 'razor-sharp intellect and strategy' },
-  { name: 'Action & Grounding', numbers: [8, 1, 6], strengthText: 'dynamic physical execution' },
-  { name: 'Heart & Intuition', numbers: [3, 5, 7], strengthText: 'deep emotional resilience' },
-  { name: 'Vision & Planning', numbers: [4, 3, 8], strengthText: 'visionary long-term foresight' },
-  { name: 'Manifestation', numbers: [2, 7, 6], strengthText: 'tangible grounding and manifestation' },
+// Lo Shu Grid Plane strength wording, keyed by the canonical Expression
+// Plane id (src/core/expressionPlanes.ts) - content only, not a second
+// Plane/numbers definition. Order mirrors the previous local plane list
+// exactly: ties in presence count are broken by first match in this order,
+// so changing it would change which plane wins a tie.
+const PLANE_PRIORITY_ORDER: ExpressionPlaneId[] = [
+  'drivePersistence',
+  'mindLogic',
+  'actionGrounding',
+  'heartIntuition',
+  'visionPlanning',
+  'manifestation',
 ];
+
+const PLANE_STRENGTH_TEXT: Record<ExpressionPlaneId, string> = {
+  drivePersistence: 'exceptional willpower',
+  mindLogic: 'razor-sharp intellect and strategy',
+  actionGrounding: 'dynamic physical execution',
+  heartIntuition: 'deep emotional resilience',
+  visionPlanning: 'visionary long-term foresight',
+  manifestation: 'tangible grounding and manifestation',
+};
 
 const MISSING_GROWTH_AREAS: Record<number, string> = {
   1: 'assertive self-direction',
@@ -75,29 +84,40 @@ const MISSING_GROWTH_AREAS: Record<number, string> = {
   9: 'humanitarian compassion and completion',
 };
 
-export const generateLoShuSummary = (dob: string): string => {
-  const digitCounts: Record<number, number> = dob ? buildLoShuGrid(dob).counts : {};
+const EMPTY_DIGIT_COUNTS: Record<Digit, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
 
-  // 1. Determine most active plane
-  let bestPlane = LO_SHU_PLANES[0];
+export const generateLoShuSummary = (dob: string): string => {
+  const digitCounts: Record<Digit, number> = dob ? buildLoShuGrid(dob).counts : EMPTY_DIGIT_COUNTS;
+
+  // 1. Determine most active plane - presence/count now comes from the
+  // canonical Expression Plane model (src/core/expressionPlanes.ts) rather
+  // than a locally duplicated numbers array. Tie-breaking (first plane to
+  // reach the current max) is preserved via PLANE_PRIORITY_ORDER above.
+  const presenceById = new Map(
+    getAllExpressionPlanePresence(digitCounts).map((presence) => [presence.plane.id, presence] as const),
+  );
+
+  let bestPlaneId = PLANE_PRIORITY_ORDER[0];
   let maxMatches = -1;
 
-  for (const plane of LO_SHU_PLANES) {
-    const presentCount = plane.numbers.filter((n) => (digitCounts[n] || 0) > 0).length;
+  for (const id of PLANE_PRIORITY_ORDER) {
+    const presentCount = presenceById.get(id)!.presentCount;
     if (presentCount > maxMatches) {
       maxMatches = presentCount;
-      bestPlane = plane;
+      bestPlaneId = id;
     }
   }
 
+  const bestPlaneStrengthText = PLANE_STRENGTH_TEXT[bestPlaneId];
+
   // 2. Identify primary growth focus
-  const priorityOrder = [4, 3, 2, 5, 7, 8, 1, 6, 9];
+  const priorityOrder: Digit[] = [4, 3, 2, 5, 7, 8, 1, 6, 9];
   const primaryMissing = priorityOrder.find((n) => !digitCounts[n]) || 4;
   const growthArea = MISSING_GROWTH_AREAS[primaryMissing] || 'inner balance';
 
 if (maxMatches === 3) {
-    return `In numerology, your birth-date pattern is traditionally associated with ${bestPlane.strengthText} — one of your strongest patterns. It may also be worth balancing that with ${growthArea}.`;
+    return `In numerology, your birth-date pattern is traditionally associated with ${bestPlaneStrengthText} — one of your strongest patterns. It may also be worth balancing that with ${growthArea}.`;
   }
 
-  return `In numerology, your birth-date pattern is traditionally associated with ${bestPlane.strengthText}. It may be worth developing ${growthArea} as a complementary area of growth.`;
+  return `In numerology, your birth-date pattern is traditionally associated with ${bestPlaneStrengthText}. It may be worth developing ${growthArea} as a complementary area of growth.`;
 };

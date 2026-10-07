@@ -63,6 +63,23 @@ describe('generateLoShuSummary', () => {
       'In numerology, your birth-date pattern is traditionally associated with exceptional willpower. It may be worth developing financial order and systematic discipline as a complementary area of growth.'
     );
   });
+
+  // Migration guard: src/core/expressionPlanes.ts's `actionGrounding`
+  // ([8,1,6]) and `manifestation` ([2,7,6]) must stay wired to the correct
+  // strength text after the move to the canonical Plane model - these two
+  // DOBs are each a full match for exactly one of the pair, so a swapped
+  // mapping would surface here as the wrong strengthText.
+  test('1968-01-16: full match on actionGrounding [8,1,6] uses "dynamic physical execution"', () => {
+    expect(generateLoShuSummary('1968-01-16')).toBe(
+      'In numerology, your birth-date pattern is traditionally associated with dynamic physical execution — one of your strongest patterns. It may also be worth balancing that with financial order and systematic discipline.'
+    );
+  });
+
+  test('1972-07-26: full match on manifestation [2,7,6] uses "tangible grounding and manifestation"', () => {
+    expect(generateLoShuSummary('1972-07-26')).toBe(
+      'In numerology, your birth-date pattern is traditionally associated with tangible grounding and manifestation — one of your strongest patterns. It may also be worth balancing that with financial order and systematic discipline.'
+    );
+  });
 });
 
 describe('getTimeOfDayGreeting', () => {
