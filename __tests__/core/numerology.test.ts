@@ -418,6 +418,127 @@ describe('DIGITS', () => {
   });
 });
 
+// Test 51 - Twin-Profile Consistency: two different names sharing the same
+// DOB. Regression coverage for the read-only audit's hand-traced results -
+// in particular, Maya Sharma's Personality lands on 33 (a master number),
+// which is the first case in this suite where a REAL name (not a synthetic
+// `reduceNumber` input) exercises master-number preservation all the way
+// through `calcPersonality`.
+describe('twin profiles - Maya Sharma vs Meera Sharma (Test 51)', () => {
+  const maya: Profile = {
+    id: 't-maya',
+    fullName: 'Maya Sharma',
+    dob: '1992-05-14',
+    system: 'pythagorean',
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  const meera: Profile = {
+    id: 't-meera',
+    fullName: 'Meera Sharma',
+    dob: '1992-05-14',
+    system: 'pythagorean',
+    createdAt: '2026-01-01T00:00:00Z',
+  };
+
+  test('Maya Sharma - calcLifePath / calcDestiny / calcSoulUrge / calcPersonality', () => {
+    expect(calcLifePath(maya.dob)).toEqual({ value: 4, chain: [13, 4], parts: [5, 5, 3] });
+    expect(calcDestiny(maya.fullName, maya.system)).toEqual({ value: 1, chain: [37, 10, 1] });
+    expect(calcSoulUrge(maya.fullName, maya.system)).toEqual({ value: 4, chain: [4] });
+    expect(calcPersonality(maya.fullName, maya.system)).toEqual({ value: 33, chain: [33] });
+  });
+
+  test('Meera Sharma - calcLifePath / calcDestiny / calcSoulUrge / calcPersonality', () => {
+    expect(calcLifePath(meera.dob)).toEqual({ value: 4, chain: [13, 4], parts: [5, 5, 3] });
+    expect(calcDestiny(meera.fullName, meera.system)).toEqual({ value: 3, chain: [48, 12, 3] });
+    expect(calcSoulUrge(meera.fullName, meera.system)).toEqual({ value: 4, chain: [13, 4] });
+    expect(calcPersonality(meera.fullName, meera.system)).toEqual({ value: 8, chain: [35, 8] });
+  });
+
+  test('full buildNumerologyReport for Maya Sharma', () => {
+    expect(buildNumerologyReport(maya)).toEqual({
+      system: 'pythagorean',
+      lifePath: 4,
+      destiny: 1,
+      soulUrge: 4,
+      personality: 33,
+      birthday: 14,
+      reductions: {
+        lifePathParts: [5, 5, 3],
+        lifePath: [13, 4],
+        destiny: [37, 10, 1],
+        soulUrge: [4],
+        personality: [33],
+        birthday: [14],
+      },
+    });
+  });
+
+  test('full buildNumerologyReport for Meera Sharma', () => {
+    expect(buildNumerologyReport(meera)).toEqual({
+      system: 'pythagorean',
+      lifePath: 4,
+      destiny: 3,
+      soulUrge: 4,
+      personality: 8,
+      birthday: 14,
+      reductions: {
+        lifePathParts: [5, 5, 3],
+        lifePath: [13, 4],
+        destiny: [48, 12, 3],
+        soulUrge: [13, 4],
+        personality: [35, 8],
+        birthday: [14],
+      },
+    });
+  });
+
+  test('Life Path and Birthday are identical for both profiles - date-only, independent of name', () => {
+    const mayaReport = buildNumerologyReport(maya);
+    const meeraReport = buildNumerologyReport(meera);
+
+    expect(mayaReport.lifePath).toBe(meeraReport.lifePath);
+    expect(mayaReport.birthday).toBe(meeraReport.birthday);
+    expect(mayaReport.lifePath).toBe(4);
+    expect(mayaReport.birthday).toBe(14);
+  });
+
+  test('name-based results differ between the two profiles and match each profile\'s own expected values', () => {
+    const mayaReport = buildNumerologyReport(maya);
+    const meeraReport = buildNumerologyReport(meera);
+
+    expect(mayaReport.destiny).toBe(1);
+    expect(meeraReport.destiny).toBe(3);
+    expect(mayaReport.destiny).not.toBe(meeraReport.destiny);
+
+    expect(mayaReport.personality).toBe(33);
+    expect(meeraReport.personality).toBe(8);
+    expect(mayaReport.personality).not.toBe(meeraReport.personality);
+  });
+
+  test('Soul Urge reaches the same final value (4) via different raw sums/chains for the two names', () => {
+    // Same final digit is a coincidence of this particular pair of names,
+    // not evidence the two are sharing a calculation - the underlying raw
+    // sums and reduction chains are genuinely different (4 vs. 13 -> 4).
+    expect(calcSoulUrge(maya.fullName, maya.system).chain).toEqual([4]);
+    expect(calcSoulUrge(meera.fullName, meera.system).chain).toEqual([13, 4]);
+  });
+
+  test("Maya Sharma's Personality (33) is preserved as a master number through the real name-calculation pipeline", () => {
+    const result = calcPersonality(maya.fullName, maya.system);
+
+    expect(result.value).toBe(33);
+    expect(isMasterNumber(result.value)).toBe(true);
+    // Never reduced further - a path that incorrectly fully-reduced master
+    // numbers here would show chain [33, 6] and value 6 instead.
+    expect(result.chain).toEqual([33]);
+
+    const report = buildNumerologyReport(maya);
+    expect(report.personality).toBe(33);
+    expect(report.reductions.personality).toEqual([33]);
+  });
+});
+
 // Helper: raw (pre-reduction) letter sums, re-derived from the public reduction
 // chains so we can assert the vowels + consonants = all-letters invariant.
 function nameRawSum(name: string): { all: number; vowels: number; consonants: number } {

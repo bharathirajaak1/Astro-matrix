@@ -181,34 +181,6 @@ export default function ForecastScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Period Switcher */}
-        <View style={styles.switcher}>
-          <TouchableOpacity
-            style={[styles.switchTab, activeTab === 'day' && styles.switchTabActive]}
-            onPress={() => selectTab('day')}
-          >
-            <Text style={[styles.switchText, activeTab === 'day' && styles.switchTextActive]}>Today</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.switchTab, activeTab === 'week' && styles.switchTabActive]}
-            onPress={() => selectTab('week')}
-          >
-            <Text style={[styles.switchText, activeTab === 'week' && styles.switchTextActive]}>This Week</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.switchTab, activeTab === 'month' && styles.switchTabActive]}
-            onPress={() => selectTab('month')}
-          >
-            <Text style={[styles.switchText, activeTab === 'month' && styles.switchTextActive]}>This Month</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.switchTab, activeTab === 'year' && styles.switchTabActive]}
-            onPress={() => selectTab('year')}
-          >
-            <Text style={[styles.switchText, activeTab === 'year' && styles.switchTextActive]}>This Year</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* TODAY'S FORECAST */}
         {activeTab === 'day' && (
           <View style={styles.card}>
@@ -475,7 +447,7 @@ const styles = StyleSheet.create({
   header: { marginBottom: 18 },
   headerSub: { fontSize: 11, fontWeight: '800', color: '#77706A', letterSpacing: 0.8 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#2C2523', marginTop: 4 },
-  headerDate: { fontSize: 12, color: '#5F5A55', marginTop: 4 },
+  headerDate: { fontSize: 12, fontWeight: '500', color: '#6C6862', marginTop: 4 },
   cyclesRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   cycleCard: {
     flex: 1,
@@ -498,17 +470,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cycleValue: { fontSize: 24, fontWeight: '800', color: '#2C2523', marginTop: 4 },
-  switcher: {
-    flexDirection: 'row',
-    backgroundColor: '#EFEBE4',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
-  },
-  switchTab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 9 },
-  switchTabActive: { backgroundColor: '#FFFFFF' },
-  switchText: { fontSize: 12, fontWeight: '700', color: '#7C736C' },
-  switchTextActive: { color: '#2C2523' },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -520,16 +481,16 @@ const styles = StyleSheet.create({
   periodTitle: { fontSize: 11, fontWeight: '800', color: '#77706A', letterSpacing: 0.8 },
   periodDate: { fontSize: 18, fontWeight: '800', color: '#2C2523', marginTop: 4 },
   numberStatement: { fontSize: 15, fontWeight: '800', color: '#2C2523', marginBottom: 6 },
-  explanationLine: { fontSize: 12, color: '#5F5A55', lineHeight: 18, marginTop: 6 },
+  explanationLine: { fontSize: 12, fontWeight: '500', color: '#6C6862', lineHeight: 18, marginTop: 6 },
   cardTheme: { fontSize: 13, fontWeight: '800', color: '#2C2523', marginBottom: 8, marginTop: 2 },
-  cardBody: { fontSize: 13, color: '#5F5A55', lineHeight: 20 },
+  cardBody: { fontSize: 15, color: '#1C1B1A', lineHeight: 20 },
   divider: { height: 1, backgroundColor: '#F0ECE6', marginVertical: 14 },
   expandRow: { marginTop: 10 },
   expandLabel: { fontSize: 12, fontWeight: '700' },
   guidelinesTitle: { fontSize: 14, fontWeight: '800', color: '#2C2523', marginBottom: 10 },
   guideRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 4 },
   guideBullet: { fontSize: 14, color: '#5E7563', marginRight: 8, lineHeight: 18 },
-  guideText: { fontSize: 12, color: '#5F5A55', lineHeight: 18, flex: 1 },
+  guideText: { fontSize: 15, color: '#1C1B1A', lineHeight: 18, flex: 1 },
   secondaryLabel: { fontSize: 12, fontWeight: '700', color: '#77706A' },
-  secondaryText: { fontSize: 11, color: '#5F5A55', lineHeight: 17, marginTop: 4 },
+  secondaryText: { fontSize: 12, fontWeight: '500', color: '#6C6862', lineHeight: 17, marginTop: 4 },
 });

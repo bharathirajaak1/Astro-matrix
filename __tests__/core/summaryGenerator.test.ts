@@ -13,27 +13,35 @@ import {
  */
 
 describe('generateNumbersSummary', () => {
+  // Reworded (AstroMatrix Birth Chart PDF corrections task) from a
+  // declarative "You lead with..."/"Your path is deeply aligned" framing to
+  // a hedged "Numerology traditionally associates..." framing, consistent
+  // with the rest of the approved content. Not displayed on the Blueprint
+  // screen (blueprint.tsx computes this value but never renders it), so
+  // this wording change has no visible effect there - see
+  // generateLoShuSummary below, which IS Blueprint-visible and is
+  // deliberately left untouched.
   test('different life path and second number, explicit Destiny label', () => {
     expect(generateNumbersSummary(1, 6, 'Destiny')).toBe(
-      'You lead with courage and vision (Life Path 1) and nurture with devotion and responsibility (Destiny 6).'
+      'Numerology traditionally associates your Life Path (1) with a tendency to lead, drawing on courage and vision, and your Destiny (6) with a tendency to nurture, drawing on devotion and responsibility.'
     );
   });
 
   test('life path equal to second number uses the aligned-path template', () => {
     expect(generateNumbersSummary(5, 5)).toBe(
-      'Your path is deeply aligned: you adapt with fearless adaptability through both your Life Path (5) and Soul Urge (5).'
+      'Numerology traditionally associates both your Life Path (5) and Soul Urge (5) with the same theme: a tendency to adapt, drawing on fearless adaptability.'
     );
   });
 
   test('master numbers (11 and 22) resolve to their master-number traits', () => {
     expect(generateNumbersSummary(11, 22)).toBe(
-      'You illuminate with master spiritual vision (Life Path 11) and manifest with grand architectural mastery (Soul Urge 22).'
+      'Numerology traditionally associates your Life Path (11) with a tendency to illuminate, drawing on master spiritual vision, and your Soul Urge (22) with a tendency to manifest, drawing on grand architectural mastery.'
     );
   });
 
   test('secondLabel defaults to "Soul Urge" when omitted', () => {
     expect(generateNumbersSummary(3, 8)).toBe(
-      'You create with expressive optimism (Life Path 3) and execute with resilient ambition (Soul Urge 8).'
+      'Numerology traditionally associates your Life Path (3) with a tendency to create, drawing on expressive optimism, and your Soul Urge (8) with a tendency to execute, drawing on resilient ambition.'
     );
   });
 });

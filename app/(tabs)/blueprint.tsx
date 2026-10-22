@@ -3,19 +3,19 @@ import { Redirect, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
 import { buildLoShuGrid, LO_SHU_LAYOUT } from '@/core/loShu';
-import { buildNumerologyReport } from '@/core/numerology';
-import { generateNumbersSummary, generateLoShuSummary } from '@/core/summaryGenerator';
+import { buildNumerologyReport, DIGITS } from '@/core/numerology';
 import {
   getAllExpressionPlanePresence,
-  type ExpressionPlaneId,
   type ExpressionPlanePresence,
 } from '@/core/expressionPlanes';
+import { generateNumbersSummary, generateLoShuSummary } from '@/core/summaryGenerator';
 import type { NumerologyReport } from '@/core/types';
 import { CORE_NUMBERS } from '@/data/interpretations';
 import { getCoreNumberInterpretation, getCoreNumberSummary, type CoreNumberKey } from '@/data/coreNumberContent';
+import { PLANE_PRESENTATION } from '@/data/expressionPlaneContent';
 import { useProfileStore } from '@/features/profile/store';
 import { Card, NumberBadge, Screen, SectionHeader, Txt } from '@/ui/components';
-import { radius, spacing, useTheme } from '@/ui/theme';
+import { spacing, useTheme } from '@/ui/theme';
 
 /**
  * Dashboard foundation: a persistent Blueprint screen consolidating the
@@ -110,61 +110,24 @@ function InterpretationBullets({ label, items }: { label: string; items: string[
   );
 }
 
-/** Blueprint-only presentation metadata for each canonical Expression
- *  Plane (src/core/expressionPlanes.ts) - icon/subtitle/description text
- *  that has no equivalent in the canonical model and belongs here, not in
- *  a second Plane/numbers definition. Keyed by the canonical Plane id so
- *  it can never drift out of sync with which numbers a Plane actually
- *  represents; names, numbers, and presence all come from the canonical
- *  module itself. */
-const PLANE_PRESENTATION: Record<ExpressionPlaneId, { icon: string; subtitle: string; description: string }> = {
-  mindLogic: {
-    icon: '🧠',
-    subtitle: 'Intellect & memory',
-    description: 'Your analytical thinking, memory, and cognitive agility.',
-  },
-  heartIntuition: {
-    icon: '💖',
-    subtitle: 'Empathy & feelings',
-    description: 'Your empathy, spiritual attunement, feelings, and emotional resilience.',
-  },
-  actionGrounding: {
-    icon: '🌱',
-    subtitle: 'Execution & discipline',
-    description: 'Your physical endurance, discipline, material mastery, and everyday habits.',
-  },
-  visionPlanning: {
-    icon: '🔭',
-    subtitle: 'Ideas & strategy',
-    description: 'Your ability to come up with ideas, plan ahead, and structure your approach.',
-  },
-  drivePersistence: {
-    icon: '⚡',
-    subtitle: 'Focus & resolve',
-    description: 'Your inner persistence, focus, and grit to complete objectives.',
-  },
-  manifestation: {
-    icon: '🏃',
-    subtitle: 'Decisive movement',
-    description: 'Your ability to turn ideas into visible results, and to follow through until something becomes real.',
-  },
-};
+
+const PLANES_OF_EXPRESSION_INTRO_TEXT =
+  'Your Lo Shu Grid shows the numbers represented in your birth date and the numbers that are missing.\n\n' +
+  'These numbers form six Planes of Expression, each representing a different area of how you may think, feel, plan, act and express yourself.\n\n' +
+  'AstroMatrix looks at these patterns to identify areas for conscious attention. Your Daily Activations then turn that personal focus into simple activities you can practise each day.';
 
 /** A small, fixed-size 3x3 Lo Shu mini-grid for one Plane card - always
- *  built from the canonical `LO_SHU_LAYOUT` (never a second hardcoded
- *  digit grid). Three visual states per cell, using only existing theme
- *  tokens: a cell outside this Plane is neutral/subdued; a Plane cell
- *  whose digit is present gets the strong filled look; a Plane cell whose
- *  digit is missing gets a muted but still Plane-colored outline, visually
- *  between the other two. No text beyond the digit itself. */
+ *  built from the canonical `LO_SHU_LAYOUT` (never a second hardcoded digit
+ *  grid). Ported verbatim (same colors/layout, including the `#5A459D`
+ *  accent) from its prior home in app/(tabs)/remedies.tsx - appearance is
+ *  unchanged, only the surrounding file moved. */
 function PlaneMiniGrid({ presence }: { presence: ExpressionPlanePresence }) {
-  const theme = useTheme();
   const { plane, presentNumbers } = presence;
 
   return (
-    <View style={{ width: 68, height: 68, gap: spacing.xs }}>
+    <View style={{ width: 68, height: 68, gap: 4 }}>
       {LO_SHU_LAYOUT.map((row, rowIndex) => (
-        <View key={rowIndex} style={{ flex: 1, flexDirection: 'row', gap: spacing.xs }}>
+        <View key={rowIndex} style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
           {row.map((digit, colIndex) => {
             const belongsToPlane = plane.cells.some((cell) => cell.row === rowIndex && cell.col === colIndex);
             const isPresent = belongsToPlane && presentNumbers.includes(digit);
@@ -173,23 +136,15 @@ function PlaneMiniGrid({ presence }: { presence: ExpressionPlanePresence }) {
                 key={digit}
                 style={{
                   flex: 1,
-                  borderRadius: radius.sm,
+                  borderRadius: 8,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderWidth: belongsToPlane && isPresent ? 2 : 1,
-                  borderColor: belongsToPlane ? theme.colors.primary : theme.colors.border,
-                  backgroundColor: belongsToPlane
-                    ? isPresent
-                      ? theme.colors.primarySoft
-                      : theme.colors.surface
-                    : theme.colors.surfaceAlt,
+                  borderWidth: isPresent ? 2 : 1,
+                  borderColor: belongsToPlane ? '#5A459D' : '#EDEBE6',
+                  backgroundColor: !belongsToPlane ? '#F5F3EF' : isPresent ? '#F4F2FF' : '#FFFFFF',
                 }}
               >
-                <Txt
-                  variant="caption"
-                  color={belongsToPlane && isPresent ? 'primary' : 'textMuted'}
-                  style={belongsToPlane && isPresent ? { fontWeight: '700' } : undefined}
-                >
+                <Txt style={{ fontSize: 12, fontWeight: isPresent ? '700' : '500', color: isPresent ? '#5A459D' : '#6B655E' }}>
                   {digit}
                 </Txt>
               </View>
@@ -222,6 +177,13 @@ export default function BlueprintScreen() {
   }
 
   const counts: Record<number, number> = loShu.counts;
+  // Derived directly from the canonical `loShu` counts - `missing`/
+  // `repeated` are already computed by `buildLoShuGrid()`; `active` is the
+  // one straightforward complement (count > 0), not a second calculation.
+  const activeNumbers = DIGITS.filter((d) => counts[d] > 0);
+  // Each Plane's presence against this profile's Lo Shu counts - reads the
+  // existing canonical `getAllExpressionPlanePresence()`, never re-derived.
+  const planePresences = getAllExpressionPlanePresence(counts);
 
   const numbersSummary = generateNumbersSummary(
     report.lifePath ?? 1,
@@ -230,7 +192,6 @@ export default function BlueprintScreen() {
   );
   const loShuSummary = generateLoShuSummary(profile.dob);
   const coreSummary = getCoreNumberSummary(report);
-  const planePresences = getAllExpressionPlanePresence(loShu.counts);
 
   const [dobYear, dobMonth, dobDay] = profile.dob.split('-').map(Number);
   const dobFormatted = new Date(dobYear, dobMonth - 1, dobDay).toLocaleDateString('en-US', {
@@ -248,13 +209,19 @@ export default function BlueprintScreen() {
         </Txt>
       </View>
 
+      <SectionHeader
+        title="Blueprint"
+        subtitle="Understand your personal numerology pattern"
+        titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 18 }}
+      />
       <Txt variant="body">
-        Your Blueprint brings together your core numerology numbers and your Lo Shu birth-date
-        pattern — two different ways of looking at your personality and tendencies.
+        Your Blueprint brings together the key patterns found in your name and date of birth.
+        Explore your Core Numbers, personal summary and Lo Shu Grid to understand different
+        aspects of your natural tendencies and personal pattern.
       </Txt>
-
-      <Txt variant="body" color="textMuted">
-        {numbersSummary}
+      <Txt variant="body">
+        As you explore your Blueprint, you'll also find areas for further reflection and discovery
+        based on your unique numbers.
       </Txt>
 
       <SectionHeader
@@ -362,30 +329,45 @@ export default function BlueprintScreen() {
         </View>
       </Card>
 
+      <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+        <View style={{ gap: 2 }}>
+          <SectionLabel label="Active numbers" />
+          <Txt variant="body">{activeNumbers.length > 0 ? activeNumbers.join(', ') : 'None'}</Txt>
+        </View>
+        <View style={{ gap: 2 }}>
+          <SectionLabel label="Missing numbers" />
+          <Txt variant="body">{loShu.missing.length > 0 ? loShu.missing.join(', ') : 'None'}</Txt>
+        </View>
+        <View style={{ gap: 2 }}>
+          <SectionLabel label="Repeated numbers" />
+          <Txt variant="body">{loShu.repeated.length > 0 ? loShu.repeated.join(', ') : 'None'}</Txt>
+        </View>
+        <Txt variant="body" color="textMuted" style={{ marginTop: spacing.xs }}>
+          These numbers show which digits are represented in your birth-date pattern, which are
+          absent, and which appear more than once.
+        </Txt>
+      </View>
+
       <Txt variant="body" color="textMuted">
         {loShuSummary}
       </Txt>
 
       <SectionHeader
         title="Planes of Expression"
-        subtitle="Six ways to explore your Lo Shu pattern"
+        subtitle="Six areas shaped by your Lo Shu grid"
         titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
       />
       <Txt variant="body">
-        The six planes group the numbers in your Lo Shu Grid into six areas: thinking, emotions,
-        action, planning, persistence, and manifestation. The number of digits present in each
-        group gives you a simple view of how represented that area is in your birth-date pattern.
+        {PLANES_OF_EXPRESSION_INTRO_TEXT}
       </Txt>
-      <View style={{ gap: spacing.xs, marginTop: spacing.xs }}>
-        <Txt variant="label" color="textMuted" style={{ fontWeight: '700' }}>
-          How to read the mini-grids
-        </Txt>
-        <Txt variant="caption" color="textMuted">
-          Each mini-grid highlights the three numbers that form that Plane. A stronger highlight
-          means the number is present in your birth date; a softer highlight means it isn't.
-          Numbers outside the Plane are shown neutrally.
-        </Txt>
-      </View>
+
+      <SectionLabel label="How to read the mini-grids" />
+      <Txt variant="caption" color="textMuted">
+        Each mini-grid highlights the three numbers that form that Plane. A stronger highlight
+        means the number is present in your birth date; a softer highlight means it isn't.
+        Numbers outside the Plane are shown neutrally.
+      </Txt>
+
       {planePresences.map((presence) => {
         const { plane, presentCount } = presence;
         const presentation = PLANE_PRESENTATION[plane.id];
@@ -398,9 +380,9 @@ export default function BlueprintScreen() {
               : `🌿 ${presentCount} of ${total} numbers present`;
         return (
           <Card key={plane.id}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-              <Txt variant="heading">{presentation.icon}</Txt>
-              <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <Txt style={{ fontSize: 22 }}>{presentation.icon}</Txt>
+              <View style={{ flex: 1, gap: 2 }}>
                 <Txt variant="heading">{plane.name}</Txt>
                 <Txt variant="caption" color="textMuted">
                   {presentation.subtitle}
@@ -408,33 +390,10 @@ export default function BlueprintScreen() {
               </View>
               <PlaneMiniGrid presence={presence} />
             </View>
-            <Txt
-              variant="caption"
-              color="textMuted"
-              style={{ fontSize: 11, fontWeight: '400', marginTop: spacing.xs }}
-            >
+            <Txt style={{ fontSize: 13, fontWeight: '700', color: '#5A459D', marginTop: spacing.sm, marginBottom: 4 }}>
               {statusText}
             </Txt>
-            <Txt variant="body" color="text" style={{ marginTop: spacing.sm }}>
-              {presentation.description}
-            </Txt>
-            <View
-              style={{
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: theme.colors.surfaceAlt,
-                overflow: 'hidden',
-                marginTop: spacing.sm,
-              }}
-            >
-              <View
-                style={{
-                  height: '100%',
-                  width: `${(presentCount / total) * 100}%`,
-                  backgroundColor: presentCount === total ? theme.colors.primary : theme.colors.accent,
-                }}
-              />
-            </View>
+            <Txt variant="body">{presentation.description}</Txt>
           </Card>
         );
       })}
@@ -445,14 +404,31 @@ export default function BlueprintScreen() {
         titleStyle={{ color: '#5A459D', fontWeight: '700', fontSize: 16 }}
       />
       <Card
-        onPress={() => router.push('/onboarding/swot-audit?context=blueprint')}
-        accessibilityLabel="Open Personal SWOT"
+        onPress={() => router.push('/onboarding/blueprint-result')}
+        accessibilityLabel="Open Core Identity Revealed"
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1, gap: 2 }}>
-            <Txt variant="heading">Personal SWOT</Txt>
+            <Txt variant="heading">Core Identity Revealed</Txt>
             <Txt variant="caption" color="textMuted">
-              Your energetic audit
+              Revisit your Life Path, Destiny & Soul Urge
+            </Txt>
+          </View>
+          <Txt variant="caption" color="primary">
+            View →
+          </Txt>
+        </View>
+      </Card>
+
+      <Card
+        onPress={() => router.push('/onboarding/swot-audit?context=blueprint')}
+        accessibilityLabel="Open Personal Pattern Review"
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt variant="heading">Personal Pattern Review</Txt>
+            <Txt variant="caption" color="textMuted">
+              Explore the patterns in your Lo Shu numbers
             </Txt>
           </View>
           <Txt variant="caption" color="primary">

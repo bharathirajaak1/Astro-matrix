@@ -14,35 +14,52 @@ export default function OnboardingWelcomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.step}>Step 1 of 5</Text>
+        <Text style={styles.step}>Step 1 of 4</Text>
       </View>
 
       <View style={styles.content}>
         <Text style={styles.icon}>🧭</Text>
         <Text style={styles.title}>The Universe Speaks in Numbers</Text>
         <Text style={styles.description}>
-          Decode your destiny. Unlock your potential.
+          Discover the patterns within your name and date of birth.
         </Text>
 
+        <Text style={styles.journeyHeading}>Your AstroMatrix journey</Text>
+
         <View style={styles.perks}>
-          <View style={styles.perkRow}>
-            <Text style={styles.perkIcon}>✦</Text>
-            <Text style={styles.perkText}>Precision Lo Shu 3x3 Matrix Calculations</Text>
+          <View style={styles.featureItem}>
+            <View style={styles.featureTitleRow}>
+              <Text style={styles.perkIcon}>✦</Text>
+              <Text style={styles.featureTitle}>Your Personal Blueprint</Text>
+            </View>
+            <Text style={styles.featureDescription}>
+              Explore the key number patterns in your name and birth date.
+            </Text>
           </View>
-          <View style={styles.perkRow}>
-            <Text style={styles.perkIcon}>✦</Text>
-            <Text style={styles.perkText}>Daily Personal Luck Snapshot & Golden Hour</Text>
+          <View style={styles.featureItem}>
+            <View style={styles.featureTitleRow}>
+              <Text style={styles.perkIcon}>✦</Text>
+              <Text style={styles.featureTitle}>Your Personal Forecast</Text>
+            </View>
+            <Text style={styles.featureDescription}>
+              Explore the flow of your Core Numbers through time.
+            </Text>
           </View>
-          <View style={styles.perkRow}>
-            <Text style={styles.perkIcon}>✦</Text>
-            <Text style={styles.perkText}>7-Day Foundational Micro-Rituals & Voice Journal</Text>
+          <View style={styles.featureItem}>
+            <View style={styles.featureTitleRow}>
+              <Text style={styles.perkIcon}>✦</Text>
+              <Text style={styles.featureTitle}>Daily Activations</Text>
+            </View>
+            <Text style={styles.featureDescription}>
+              Turn your personal focus into simple daily practices.
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.primaryButton} onPress={handleNext}>
-          <Text style={styles.primaryButtonText}>Yes, Show Me My Matrix →</Text>
+          <Text style={styles.primaryButtonText}>Explore AstroMatrix →</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -87,6 +104,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 28,
   },
+  // A section heading for the three feature items below - stronger than
+  // `description` (secondary subtitle) but clearly subordinate to `title`
+  // (the main heading), so the hierarchy stays title > journeyHeading >
+  // featureTitle > description/featureDescription.
+  journeyHeading: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1C1917',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
   perks: {
     width: '100%',
     backgroundColor: '#FFFFFF',
@@ -94,9 +122,12 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: 1,
     borderColor: '#E7E5E4',
-    gap: 12,
+    gap: 14,
   },
-  perkRow: {
+  featureItem: {
+    gap: 4,
+  },
+  featureTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -105,10 +136,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#57715E',
   },
-  perkText: {
+  // Stronger than `featureDescription` so each item's title reads as the
+  // primary label, matching the rest of the app's body-text weight for
+  // emphasis (e.g. bold feature/section titles elsewhere).
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1C1917',
+  },
+  // Normal readable body-text contrast, matching the color already used
+  // for explanatory body text on the adjoining onboarding screens (e.g.
+  // onboarding/hook.tsx's `bodyText`), not the muted secondary tone used
+  // for `description` above.
+  featureDescription: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#292524',
+    color: '#44403C',
+    lineHeight: 18,
+    marginLeft: 24,
   },
   footer: {
     width: '100%',

@@ -1,0 +1,361 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Maya Sharma - AstroMatrix Report</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1C1917; background: #FAF9F6; margin: 32px; line-height: 1.5; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  h2 { font-size: 19px; margin-top: 32px; border-bottom: 1px solid #E7E5E4; padding-bottom: 6px; color: #2C2523; }
+  h3 { font-size: 16px; margin-bottom: 2px; }
+  h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: #57534E; margin: 10px 0 2px; }
+  p { margin: 4px 0; }
+  ul { margin: 2px 0 8px; padding-left: 20px; }
+  .meta { color: #57534E; margin-bottom: 16px; }
+  .core-number { margin-bottom: 20px; }
+  /* Pagination: never leave a heading as the last line on a page - pairs
+     with the specific break-inside:avoid blocks below (grid+legend, each
+     plane card, each SWOT subsection's lead, each pattern connection) to
+     keep a heading with at least its first line of content. Deliberately
+     not applied to every section wholesale - a long list (e.g. many
+     present/missing numbers) is still allowed to flow and break normally
+     across a page boundary, so a large section is never forced entirely
+     onto one page or pushed as a whole onto a fresh one. */
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+
+  /* Cover page (Stage 3): a restrained motif (two concentric circles,
+     echoing the existing AstroMatrix logo/grid identity) always renders,
+     whether or not the logo image itself loaded, so the cover never looks
+     empty or unbalanced when logoDataUri is null. */
+  .cover-page { page-break-after: always; text-align: center; padding: 140px 40px 40px; position: relative; min-height: 500px; }
+  .cover-motif { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; border-radius: 50%; border: 2px solid #D9CFF2; z-index: 0; }
+  .cover-motif::after { content: ''; position: absolute; top: 45px; left: 45px; right: 45px; bottom: 45px; border-radius: 50%; border: 2px solid #D9CFF2; }
+  .cover-logo { position: relative; width: 96px; height: 96px; margin-bottom: 8px; z-index: 1; }
+  .cover-wordmark { position: relative; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #5A459D; z-index: 1; }
+  .cover-title { position: relative; font-size: 30px; margin: 8px 0 24px; z-index: 1; }
+  .cover-name { position: relative; font-size: 18px; font-weight: 600; margin: 4px 0; z-index: 1; }
+  .cover-dob { position: relative; color: #57534E; margin-bottom: 20px; z-index: 1; }
+  .cover-theme { position: relative; font-style: italic; color: #44403A; max-width: 420px; margin: 0 auto; z-index: 1; }
+
+  /* Introduction page (Stage 3). */
+  .intro-page { page-break-after: always; }
+  .intro-card { background: #FFFFFF; border: 1px solid #E7E5E4; border-radius: 10px; padding: 14px 16px; margin: 12px 0; break-inside: avoid; page-break-inside: avoid; }
+
+  .loshu-grid-block { break-inside: avoid; page-break-inside: avoid; }
+  table.loshu-grid { border-collapse: collapse; margin: 10px 0; }
+  table.loshu-grid td { width: 56px; height: 56px; text-align: center; vertical-align: middle; border: 1px solid #D6D3CE; }
+  table.loshu-grid .digit { display: block; font-size: 18px; font-weight: 700; }
+  table.loshu-grid .count { display: block; font-size: 10px; color: #57534E; }
+  table.loshu-grid td.missing { background: #F5F3EF; color: #A8A29E; }
+  table.loshu-grid td.present { background: #F4F2FF; }
+  table.loshu-grid td.repeated { background: #EDE9FE; }
+  .legend { font-size: 12px; color: #57534E; }
+  .legend-swatch { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: middle; }
+  .legend-swatch.present { background: #F4F2FF; border: 1px solid #5A459D; }
+  .legend-swatch.missing { background: #F5F3EF; border: 1px solid #D6D3CE; }
+  .legend-swatch.repeated { background: #EDE9FE; border: 1px solid #5A459D; }
+  table.mini-grid { border-collapse: collapse; margin: 6px 0; }
+  table.mini-grid td { width: 22px; height: 22px; text-align: center; vertical-align: middle; font-size: 10px; border: 1px solid #EDEBE6; }
+  table.mini-grid td.outside { background: #F5F3EF; color: #A8A29E; }
+  table.mini-grid td.present { background: #F4F2FF; color: #5A459D; font-weight: 700; border-color: #5A459D; }
+  table.mini-grid td.missing-in-plane { background: #FFFFFF; color: #6B655E; border-color: #5A459D; }
+  .plane-card { margin-bottom: 18px; break-inside: avoid; page-break-inside: avoid; }
+  .planes-lead { break-inside: avoid; page-break-inside: avoid; }
+  .reflection { font-style: italic; color: #57534E; }
+  .connection-block { margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+  .connections-lead { break-inside: avoid; page-break-inside: avoid; }
+  .swot-lead { break-inside: avoid; page-break-inside: avoid; }
+  .swot-synthesis { font-weight: 600; }
+  .subtitle { font-size: 12px; font-weight: 600; color: #5A459D; text-transform: uppercase; letter-spacing: 0.3px; margin: 0 0 4px; }
+  .general-note { font-size: 12px; font-style: italic; color: #57534E; }
+
+  /* "Applying Your Blueprint to Life" (Stage 3). */
+  .apply-lead { break-inside: avoid; page-break-inside: avoid; }
+  .apply-item { background: #FFFFFF; border: 1px solid #E7E5E4; border-radius: 10px; padding: 12px 16px; margin: 10px 0; break-inside: avoid; page-break-inside: avoid; }
+
+  /* Closing page (Stage 3): a clearly separate, dedicated final page. */
+  .closing-page { page-break-before: always; }
+</style>
+</head>
+<body>
+  
+    <div class="cover-page">
+      <div class="cover-motif" aria-hidden="true"></div>
+      
+      <p class="cover-wordmark">AstroMatrix</p>
+      <h1 class="cover-title">Your Personal Birth Chart</h1>
+      <p class="cover-name">Maya Sharma</p>
+      <p class="cover-dob">Born 1992-05-14</p>
+      <p class="cover-theme">A reflection on practicality and steady, step-by-step building, self-direction and original thinking, and warm and quietly devoted.</p>
+    </div>
+  
+  
+    <div class="intro-page">
+      <h2>Understanding Your Numerology Blueprint</h2>
+      <div class="intro-card">
+        <h3>Pythagorean Numerology</h3>
+        <p>Your Core Numbers (Life Path, Destiny, Soul Urge, Personality, and Birthday) come from Pythagorean numerology - a traditional approach that assigns a number to each letter of your name and reduces your birth date to find a small set of core numbers, then looks at what each number has traditionally been associated with.</p>
+      </div>
+      <div class="intro-card">
+        <h3>The Lo Shu Grid</h3>
+        <p>Your Lo Shu Grid is a separate traditional framework. It places every digit of your full birth date onto a fixed 3x3 grid and looks at which numbers are present, repeated, or missing - a different lens from your Core Numbers, not a recalculation of them.</p>
+      </div>
+      <div class="intro-card">
+        <h3>Bringing Them Together</h3>
+        <p>AstroMatrix brings these two traditions together as complementary perspectives on the same birth details, rather than treating either one as the complete picture. Your six Planes of Expression take this further, grouping specific Lo Shu Grid positions into six thematic readings of the same grid.</p>
+      </div>
+      <div class="intro-card">
+        <h3>How to Use This Report</h3>
+        <p>Throughout this report, every interpretation is offered as a prompt for self-reflection - a traditional lens to consider, not a fixed label, a diagnosis, a scientific assessment, or a guarantee about your personality, future, health, wealth, relationships, or success.</p>
+      </div>
+      <p class="general-note">Your Personal Pattern Review draws on traditional numerology associations with the numbers present and absent in your birth date. It&#39;s offered as a prompt for self-reflection — not a scientific assessment, a fixed trait, or a prediction.</p>
+    </div>
+  
+
+  <p class="meta">Maya Sharma &middot; Date of Birth: 1992-05-14 &middot; Pythagorean numerology</p>
+
+  <h2>Your Five Core Numbers</h2>
+  
+      <div class="core-number">
+        <h3>Life Path: 4</h3>
+        <p class="represents">Life Path is traditionally considered one of the most important Core Numbers. It&#39;s associated with the overall direction of your life and the qualities you may develop through your experiences along the way.</p>
+        <p class="your-interpretation">Life Path 4 is traditionally associated with practicality, stability and building things step by step. You may prefer having a clear plan and knowing what needs to be done before you begin. You may also take your responsibilities seriously and value things that are reliable and lasting.</p>
+        <h4>How It May Show Up</h4><ul><li>You may feel more comfortable when you have a clear plan to follow.</li><li>You may naturally break a large task into smaller, manageable steps.</li><li>When something goes wrong, you may look for a practical way to fix it rather than giving up.</li></ul>
+        <h4>Natural Strengths</h4><ul><li>You can be dependable when others need someone they can count on.</li><li>You may have patience for work that takes time and consistent effort.</li><li>You may be good at creating order when something feels confusing or disorganised.</li></ul>
+        <h4>Things to Be Mindful Of</h4><ul><li>You may sometimes hold on to a plan even when circumstances have changed.</li><li>You may put so much focus on getting things right that you forget to give yourself a break.</li><li>You may find sudden changes uncomfortable, especially when you haven&#39;t had time to prepare.</li></ul>
+      </div>
+    
+      <div class="core-number">
+        <h3>Destiny: 1</h3>
+        <p class="represents">Destiny - sometimes called Expression - is traditionally associated with the abilities and potential a person may naturally be able to express. It is calculated from every letter of your full birth name.</p>
+        <p class="your-interpretation">Destiny 1 is traditionally associated with expressing self-direction and original thinking through your abilities. This can point toward a working style where you prefer finding your own solution rather than following an existing one, and where your contribution often takes the form of starting something rather than maintaining it. People with this number are often described as able to turn an idea into self-directed action.</p>
+        <h4>How It May Show Up</h4><ul><li>At work, this may show up as volunteering to lead a new initiative rather than waiting for a role to be assigned.</li><li>When solving a problem, you may default to working out your own approach before looking at how others have done it.</li><li>In a leadership role, this can be expressed through setting a clear direction and expecting people to run with it.</li></ul>
+        <h4>Natural Strengths</h4><ul><li>Your abilities may be particularly well expressed through starting things that don&#39;t yet have an established way of doing them.</li><li>You can be effective at turning an idea into a first, workable version before anyone else has committed to it.</li><li>This pattern often supports clear, decisive communication, especially when a decision needs to be made quickly.</li></ul>
+        <h4>Things to Be Mindful Of</h4><ul><li>When overextended, this quality can show up as taking on a leading role even in situations where collaboration would serve better.</li><li>This can sometimes become a reluctance to build on an existing system rather than starting fresh.</li><li>Others may experience this expression as moving ahead without enough shared agreement first.</li></ul>
+      </div>
+    
+      <div class="core-number">
+        <h3>Soul Urge: 4</h3>
+        <p class="represents">Soul Urge is traditionally associated with inner motivation - what tends to feel meaningful, satisfying, or personally important on the inside, regardless of how it looks from the outside. It is calculated from the vowels in your full birth name.</p>
+        <p class="your-interpretation">Soul Urge 4 is traditionally associated with an inner pull toward order and dependable stability. You may feel most satisfied when you know what&#39;s expected, what the plan is, and that the people and structures around you are reliable. People with this number are often described as motivated by a need for solid ground more than excitement or acclaim.</p>
+        <h4>How It May Show Up</h4><ul><li>In personal choices, you may feel more at ease picking the option that&#39;s proven and consistent over the one that&#39;s merely exciting.</li><li>In work preferences, you may feel more satisfied when you know what needs to be done and can work through it in a clear, orderly way.</li><li>In relationships, you might value a partner or friend who follows through on what they say, more than one who&#39;s simply exciting to be around.</li></ul>
+        <h4>Natural Strengths</h4><ul><li>When this motivation is aligned with your actions, it can show up as genuine follow-through on commitments.</li><li>This inner drive can support a real sense of calm under pressure, because you&#39;ve usually prepared for it.</li><li>It can also bring steady reliability that people around you come to depend on.</li></ul>
+        <h4>Things to Be Mindful Of</h4><ul><li>When this preference becomes too strong, it can make an unplanned change feel more unsettling than it needs to be.</li><li>You may want to watch for holding onto a routine past the point it&#39;s still serving you.</li><li>Others may not always see how much effort goes into maintaining the order you rely on.</li></ul>
+      </div>
+    
+      <div class="core-number">
+        <h3>Personality: 33</h3>
+        <p class="represents">Personality is traditionally associated with the outward impression a person may tend to give, especially on a first meeting. It is calculated from the consonants in your full birth name.</p>
+        <p class="your-interpretation">Personality 33 is traditionally considered a master number and is often associated with coming across as warm and quietly devoted. In conversation, people may notice that you focus on how they&#39;re doing, and you can seem like someone who genuinely wants to help, not just appear helpful. This outward style traditionally suggests someone others feel safe opening up to.</p>
+        <h4>How It May Show Up</h4><ul><li>In a first meeting, you may come across as unusually attentive, remembering small details about what someone said.</li><li>In a group discussion, you might be the one people glance at when they need reassurance, without anyone saying anything.</li><li>In a social situation, you may seem to naturally end up supporting whoever is struggling most.</li></ul>
+        <h4>Natural Strengths</h4><ul><li>You can come across as deeply genuine, even to someone who&#39;s just met you.</li><li>Others may feel unusually safe being vulnerable with you, sooner than they would with most people.</li><li>In a group, you might be seen as the person who makes sure no one is struggling alone.</li></ul>
+        <h4>Things to Be Mindful Of</h4><ul><li>Your warmth may come across as having no limits, which can invite more than you meant to take on.</li><li>In a group discussion, you might be seen as self-sacrificing if you consistently put others first.</li><li>People may lean on you by default, simply because you rarely suggest otherwise.</li></ul>
+      </div>
+    
+      <div class="core-number">
+        <h3>Birthday: 14</h3>
+        <p class="represents">Birthday is traditionally associated with a set of natural qualities linked to the specific day of the month you were born - a supporting layer alongside the other four Core Numbers. It is taken directly from that day, without reducing it.</p>
+        <p class="your-interpretation">Your birth day is 14. For this kind of reading, it is traditionally reduced: 1 + 4 = 5. A birth day that reduces to 5 is traditionally associated with comfort with variety and change in everyday situations.</p>
+        <h4>How It May Show Up</h4><ul><li>A practical, everyday knack related to change</li><li>A practical, everyday knack related to curiosity</li><li>A practical, everyday knack related to adaptability</li></ul>
+        <h4>Natural Strengths</h4><ul><li>A practical asset: comfort with new situations.</li><li>A practical asset: a wide range of interests.</li><li>A practical asset: quick adjustment when plans shift.</li></ul>
+        <h4>Things to Be Mindful Of</h4><ul><li>Worth keeping in mind day to day: may lose interest before something is finished.</li><li>Worth keeping in mind day to day: can feel confined by routine even when it would help.</li></ul>
+      </div>
+    
+
+  <h2>Your Combined Core Profile</h2>
+  <p>Looking at your Life Path and Soul Urge together, there is a traditional pull toward practicality and steady, step-by-step building, while a pull toward order and dependable stability may be what feels personally meaningful beneath that broader direction. Your Destiny traditionally suggests self-direction and original thinking, which can sit alongside your Personality, often described as coming across as warm and quietly devoted. As a smaller, everyday layer, your Birthday traditionally points to comfort with variety and change in everyday situations. Number 4 appears in more than one part of your Core Numbers - in your Life Path and Soul Urge - so the traditional theme of practicality and steady, step-by-step building is echoed across different aspects of your profile. Your profile also includes a master number in your Personality, which traditional numerology treats as a distinct interpretive layer rather than simply a stronger version of the reduced digit. Taken together, these five numbers may be most useful as a set of traditional perspectives worth reflecting on, rather than a fixed description of who you are.</p>
+  <ul><li>practicality and steady, step-by-step building</li><li>self-direction and original thinking</li><li>warm and quietly devoted</li></ul>
+
+  <h2>Your Lo Shu Grid</h2>
+  <p>Counts: 1&times;2, 2&times;1, 3&times;0, 4&times;1, 5&times;1, 6&times;0, 7&times;0, 8&times;0, 9&times;2</p>
+  <p>Missing: 3, 6, 7, 8</p>
+  <p>Repeated: 1, 9</p>
+  <div class="loshu-grid-block">
+    <table class="loshu-grid"><tr><td class="grid-cell present"><span class="digit">4</span><span class="count">&times;1</span></td><td class="grid-cell repeated"><span class="digit">9</span><span class="count">&times;2</span></td><td class="grid-cell present"><span class="digit">2</span><span class="count">&times;1</span></td></tr><tr><td class="grid-cell missing"><span class="digit">3</span><span class="count">Missing</span></td><td class="grid-cell present"><span class="digit">5</span><span class="count">&times;1</span></td><td class="grid-cell missing"><span class="digit">7</span><span class="count">Missing</span></td></tr><tr><td class="grid-cell missing"><span class="digit">8</span><span class="count">Missing</span></td><td class="grid-cell repeated"><span class="digit">1</span><span class="count">&times;2</span></td><td class="grid-cell missing"><span class="digit">6</span><span class="count">Missing</span></td></tr></table>
+    <p class="legend">Legend:
+      <span class="legend-swatch present"></span>Present
+      <span class="legend-swatch repeated"></span>Repeated
+      <span class="legend-swatch missing"></span>Missing
+    </p>
+  </div>
+
+  <h3>Your Lo Shu Pattern</h3>
+  <p>Your birth date activates 5 of the 9 Lo Shu numbers, with Numbers 1 and 9 appearing more than once.</p>
+
+  
+    <h3>Numbers Present and Repeated</h3>
+    <ul><li>Number 1 appears 2 times in your grid. Numerology traditionally associates it with initiative — a theme that recurs in your pattern.</li><li>Number 2 appears once in your grid. Numerology traditionally associates it with partnership.</li><li>Number 4 appears once in your grid. Numerology traditionally associates it with structure.</li><li>Number 5 appears once in your grid. Numerology traditionally associates it with freedom.</li><li>Number 9 appears 2 times in your grid. Numerology traditionally associates it with compassion — a theme that recurs in your pattern.</li></ul>
+  
+  
+    <h3>Numbers for Conscious Attention</h3>
+    <ul><li>Number 3 does not appear in your grid. Numerology traditionally associates it with confident creative self-expression.</li><li>Number 6 does not appear in your grid. Numerology traditionally associates it with home harmony and domestic balance.</li><li>Number 7 does not appear in your grid. Numerology traditionally associates it with introspective trust and spiritual depth.</li><li>Number 8 does not appear in your grid. Numerology traditionally associates it with material discernment and perseverance.</li></ul>
+  
+  
+    <h3>Traditional Grid Patterns</h3>
+    <ul><li>Mind plane (4-9-2) — all three numbers in this line are present in your birth date.</li><li>Will plane (9-5-1) — all three numbers in this line are present in your birth date.</li></ul>
+  
+
+  <h3>Putting the Pattern Together</h3>
+  <p>In numerology, your birth-date pattern is traditionally associated with exceptional willpower — one of your strongest patterns. It may also be worth balancing that with confident creative self-expression. This reflects one traditional numerology interpretation of your Lo Shu pattern - offered as an optional prompt for self-reflection, not as proof of ability, superiority, a fixed destiny, or a guaranteed outcome.</p>
+
+  
+    <div class="planes-lead">
+      <h2>Your Planes of Expression</h2>
+      
+      <div class="plane-card">
+        <h3>Mind &amp; Logic</h3>
+        <table class="mini-grid"><tr><td class="mini-cell present">4</td><td class="mini-cell present">9</td><td class="mini-cell present">2</td></tr><tr><td class="mini-cell outside">3</td><td class="mini-cell outside">5</td><td class="mini-cell outside">7</td></tr><tr><td class="mini-cell outside">8</td><td class="mini-cell outside">1</td><td class="mini-cell outside">6</td></tr></table>
+        <p class="plane-description">Your analytical thinking, memory, and cognitive agility.</p>
+        <p class="plane-interpretation">All three numbers for this pattern (4, 9, 2) are present in your birth date. Numerology traditionally associates this pattern with themes such as razor-sharp intellect and strategy - a traditional lens for reflection, not a fixed trait or a guarantee of ability.</p>
+        <p class="plane-presence">Present: 4, 9, 2 &middot; Missing: None</p>
+      </div>
+    
+    </div>
+    
+      <div class="plane-card">
+        <h3>Heart &amp; Intuition</h3>
+        <table class="mini-grid"><tr><td class="mini-cell outside">4</td><td class="mini-cell outside">9</td><td class="mini-cell outside">2</td></tr><tr><td class="mini-cell missing-in-plane">3</td><td class="mini-cell present">5</td><td class="mini-cell missing-in-plane">7</td></tr><tr><td class="mini-cell outside">8</td><td class="mini-cell outside">1</td><td class="mini-cell outside">6</td></tr></table>
+        <p class="plane-description">Your empathy, spiritual attunement, feelings, and emotional resilience.</p>
+        <p class="plane-interpretation">1 of the three numbers for this pattern (3, 5, 7) is present in your birth date - 5 present, 3, 7 not. Numerology traditionally associates this pattern with themes such as deep emotional resilience, offered here as a traditional perspective rather than a fixed description.</p>
+        <p class="plane-presence">Present: 5 &middot; Missing: 3, 7</p>
+      </div>
+    
+      <div class="plane-card">
+        <h3>Action &amp; Grounding</h3>
+        <table class="mini-grid"><tr><td class="mini-cell outside">4</td><td class="mini-cell outside">9</td><td class="mini-cell outside">2</td></tr><tr><td class="mini-cell outside">3</td><td class="mini-cell outside">5</td><td class="mini-cell outside">7</td></tr><tr><td class="mini-cell missing-in-plane">8</td><td class="mini-cell present">1</td><td class="mini-cell missing-in-plane">6</td></tr></table>
+        <p class="plane-description">Your physical endurance, discipline, material mastery, and everyday habits.</p>
+        <p class="plane-interpretation">1 of the three numbers for this pattern (8, 1, 6) is present in your birth date - 1 present, 8, 6 not. Numerology traditionally associates this pattern with themes such as dynamic physical execution, offered here as a traditional perspective rather than a fixed description.</p>
+        <p class="plane-presence">Present: 1 &middot; Missing: 8, 6</p>
+      </div>
+    
+      <div class="plane-card">
+        <h3>Vision &amp; Planning</h3>
+        <table class="mini-grid"><tr><td class="mini-cell present">4</td><td class="mini-cell outside">9</td><td class="mini-cell outside">2</td></tr><tr><td class="mini-cell missing-in-plane">3</td><td class="mini-cell outside">5</td><td class="mini-cell outside">7</td></tr><tr><td class="mini-cell missing-in-plane">8</td><td class="mini-cell outside">1</td><td class="mini-cell outside">6</td></tr></table>
+        <p class="plane-description">Your ability to come up with ideas, plan ahead, and structure your approach.</p>
+        <p class="plane-interpretation">1 of the three numbers for this pattern (4, 3, 8) is present in your birth date - 4 present, 3, 8 not. Numerology traditionally associates this pattern with themes such as visionary long-term foresight, offered here as a traditional perspective rather than a fixed description.</p>
+        <p class="plane-presence">Present: 4 &middot; Missing: 3, 8</p>
+      </div>
+    
+      <div class="plane-card">
+        <h3>Drive &amp; Persistence</h3>
+        <table class="mini-grid"><tr><td class="mini-cell outside">4</td><td class="mini-cell present">9</td><td class="mini-cell outside">2</td></tr><tr><td class="mini-cell outside">3</td><td class="mini-cell present">5</td><td class="mini-cell outside">7</td></tr><tr><td class="mini-cell outside">8</td><td class="mini-cell present">1</td><td class="mini-cell outside">6</td></tr></table>
+        <p class="plane-description">Your inner persistence, focus, and grit to complete objectives.</p>
+        <p class="plane-interpretation">All three numbers for this pattern (9, 5, 1) are present in your birth date. Numerology traditionally associates this pattern with themes such as exceptional willpower - a traditional lens for reflection, not a fixed trait or a guarantee of ability.</p>
+        <p class="plane-presence">Present: 9, 5, 1 &middot; Missing: None</p>
+      </div>
+    
+      <div class="plane-card">
+        <h3>Manifestation</h3>
+        <table class="mini-grid"><tr><td class="mini-cell outside">4</td><td class="mini-cell outside">9</td><td class="mini-cell present">2</td></tr><tr><td class="mini-cell outside">3</td><td class="mini-cell outside">5</td><td class="mini-cell missing-in-plane">7</td></tr><tr><td class="mini-cell outside">8</td><td class="mini-cell outside">1</td><td class="mini-cell missing-in-plane">6</td></tr></table>
+        <p class="plane-description">Your ability to turn ideas into visible results, and to follow through until something becomes real.</p>
+        <p class="plane-interpretation">1 of the three numbers for this pattern (2, 7, 6) is present in your birth date - 2 present, 7, 6 not. Numerology traditionally associates this pattern with themes such as tangible grounding and manifestation, offered here as a traditional perspective rather than a fixed description.</p>
+        <p class="plane-presence">Present: 2 &middot; Missing: 7, 6</p>
+      </div>
+    
+  
+
+  
+      <div class="connections-lead">
+        <h2>How Your Patterns Connect</h2>
+        
+    <div class="connection-block">
+      <p>Number 1 repeats in your grid (appearing 2 times) and is part of your Action &amp; Grounding and Drive &amp; Persistence patterns above. Numerology traditionally associates Action &amp; Grounding with themes such as dynamic physical execution and Drive &amp; Persistence with themes such as exceptional willpower - a recurring thread worth noticing, not a fixed description of who you are.</p>
+      <p class="reflection">Does Number 1&#39;s presence in your Action &amp; Grounding and Drive &amp; Persistence patterns feel familiar in how you tend to approach things?</p>
+    </div>
+  
+    <div class="connection-block">
+      <p>Number 9 repeats in your grid (appearing 2 times) and is part of your Mind &amp; Logic and Drive &amp; Persistence patterns above. Numerology traditionally associates Mind &amp; Logic with themes such as razor-sharp intellect and strategy and Drive &amp; Persistence with themes such as exceptional willpower - a recurring thread worth noticing, not a fixed description of who you are.</p>
+      <p class="reflection">Does Number 9&#39;s presence in your Mind &amp; Logic and Drive &amp; Persistence patterns feel familiar in how you tend to approach things?</p>
+    </div>
+  
+      </div>
+    
+
+  <h2>Your Personal Pattern Review</h2>
+  <p>Your Personal Pattern Review draws on traditional numerology associations with the numbers present and absent in your birth date. It&#39;s offered as a prompt for self-reflection — not a scientific assessment, a fixed trait, or a prediction.</p>
+  
+      <div class="swot-lead">
+        <h3>Strengths</h3>
+        <p class="subtitle">Qualities You May Draw On</p>
+        <p>These numbers appear in your birth date. Numerology traditionally associates each with a strength:</p>
+        <p class="swot-synthesis">Together, your active numbers (1, 2, 4, 5, 9) traditionally point to initiative, partnership, structure, freedom, and compassion - themes that may be worth considering as a combined pattern, alongside each number on its own, rather than as separate, unrelated traits.</p>
+        <ul><li>Number 1 appears 2 times in your birth date. Numerology traditionally associates it with confidence to take the first step - a theme that recurs in your pattern, not a trait you definitely possess.</li></ul>
+      </div>
+      <ul><li>Number 2 appears in your birth date. Numerology traditionally associates it with an instinct for reading a room.</li><li>Number 4 appears in your birth date. Numerology traditionally associates it with a methodical, practical approach.</li><li>Number 5 appears in your birth date. Numerology traditionally associates it with comfort with new situations.</li><li>Number 9 appears 2 times in your birth date. Numerology traditionally associates it with an ability to see more than one side of a situation - a theme that recurs in your pattern, not a trait you definitely possess.</li></ul>
+    
+      <div class="swot-lead">
+        <h3>Areas to Explore</h3>
+        <p class="subtitle">Numbers to Reflect On</p>
+        <p>These numbers are not represented in your birth date — which is expected, since every Lo Shu pattern leaves several numbers unrepresented, not a sign of inability. Numerology traditionally associates each with themes that may be worth exploring as optional self-reflection (see also Numbers for Conscious Attention, earlier in this report, for a complementary traditional angle):</p>
+        
+        <ul><li>Number 3 — creative expression, communication, and social warmth.</li></ul>
+      </div>
+      <ul><li>Number 6 — responsibility, nurturing others, and a sense of home.</li><li>Number 7 — analysis, inner reflection, and a search for understanding.</li><li>Number 8 — organisation, drive toward goals, and practical authority.</li></ul>
+    
+    <div class="swot-lead">
+      <h3>Patterns to Notice</h3>
+      <p class="subtitle">What May Be Easy to Overlook</p>
+      <p class="general-note">Unlike the sections above, this reflection is offered as a general prompt for self-reflection - it is not personalized to your specific numbers.</p>
+      <p>You may bring strong vision and intuitive spark to new ideas, while finding that consistency and routine require more conscious attention.</p>
+      <p class="reflection">This isn&#39;t a personal flaw. It is simply another part of your pattern worth noticing.</p>
+    </div>
+  
+
+  
+    <div class="apply-lead">
+      <h2>Applying Your Blueprint to Life</h2>
+      <p class="general-note">A few ways you might carry each of your Core Numbers into daily life - offered as optional starting points, not instructions.</p>
+    </div>
+    
+      <div class="apply-item">
+        <h3>Life Path</h3>
+        <p>You can use this quality to your advantage when something important needs steady effort. At the same time, notice when being organised helps you and when it might be keeping you from adapting to a change.</p>
+      </div>
+    
+      <div class="apply-item">
+        <h3>Destiny</h3>
+        <p>This can be useful to explore in work or projects that genuinely need someone to take the first step, rather than situations that are already well established. It may also help to notice moments where contributing to an existing plan would express this ability just as well as starting a new one.</p>
+      </div>
+    
+      <div class="apply-item">
+        <h3>Soul Urge</h3>
+        <p>It may help to notice which parts of your routine genuinely support you, and which ones have simply become habit. Keeping that distinction in mind can make it easier to stay open to a change that&#39;s actually worth making.</p>
+      </div>
+    
+      <div class="apply-item">
+        <h3>Personality</h3>
+        <p>This outward style is especially valuable in any role where people need to feel genuinely supported. At the same time, it can help to let others see when you need care too, rather than only being the one who provides it.</p>
+      </div>
+    
+      <div class="apply-item">
+        <h3>Birthday</h3>
+        <p>This can be a useful quality to draw on deliberately in ordinary, practical moments - at work, at home, or in how you approach a task.</p>
+      </div>
+    
+  
+
+  
+      <h2>Practical Action Plan</h2>
+      
+      <div class="swot-lead">
+        <h3>Opportunities</h3>
+        <p class="subtitle">Ways to Develop</p>
+        <p>For these same numbers, here are traditional themes you might consciously work with over time — offered as possible starting points for reflection, not as practices with a guaranteed result:</p>
+        
+        <ul><li>Number 3 — a way to work with this theme is consciously exploring natural ease putting ideas into words.</li></ul>
+      </div>
+      <ul><li>Number 6 — a way to work with this theme is consciously exploring genuine warmth toward people close to you.</li><li>Number 7 — a way to work with this theme is consciously exploring a thoughtful, probing mind.</li><li>Number 8 — a way to work with this theme is consciously exploring a strong sense of what you are working toward.</li></ul>
+    
+    
+
+  
+    <div class="closing-page">
+      <h2>Your Personal Blueprint &mdash; Bringing It Together</h2>
+      <p>Across your Core Numbers, a few themes stand out: practicality and steady, step-by-step building, self-direction and original thinking, and warm and quietly devoted. These are traditional threads worth noticing as you reflect on this chart, not separate boxes to fit yourself into.</p>
+      <p>Your Lo Shu Grid activates 5 of the 9 traditional numbers, and 2 of your six Planes of Expression are fully present in your birth date - together, a picture of where your traditional pattern is concentrated, and where it stays more open.</p>
+      <h3>A Few Prompts</h3><ul><li>Number 3 may invite you to reflect on expression.</li><li>Number 6 may invite you to reflect on care.</li><li>Number 7 may invite you to reflect on introspection.</li></ul>
+      <p class="reflection">Does Number 1&#39;s presence in your Action &amp; Grounding and Drive &amp; Persistence patterns feel familiar in how you tend to approach things?</p>
+    </div>
+  
+</body>
+</html>

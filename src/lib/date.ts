@@ -44,6 +44,22 @@ export const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+/**
+ * A zero-padded "DD-Month-YYYY" label (e.g. "03-August-1979") for an ISO
+ * date - used throughout the Birth Chart PDF (AstroMatrix "Birth Chart PDF
+ * Quality Improvement" task). Deliberately never locale-dependent: always
+ * builds the string from the fixed `MONTH_NAMES` array above, never
+ * `Intl`/`toLocaleDateString`, so the same ISO date always produces the same
+ * label regardless of device locale/timezone settings. Presentation only -
+ * does not parse, validate, or recompute the date in any way.
+ */
+export function formatDDMonthYYYY(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const day = String(d ?? 1).padStart(2, '0');
+  const month = MONTH_NAMES[(m ?? 1) - 1];
+  return `${day}-${month}-${y}`;
+}
+
 /** A US-style label like "September 29, 2026" for an ISO date. */
 export function formatUSDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);

@@ -1,16 +1,51 @@
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildNumerologyReport } from '@/core/numerology';
+import { formatUSDate } from '@/lib/date';
 import {
   LIFE_PATH_ARCHETYPES,
   DESTINY_ARCHETYPES,
   SOUL_URGE_ARCHETYPES,
 } from '@/core/archetypes';
+import { summaryThemeFor } from '@/data/coreNumberContent';
+import { getCoreIdentitySection, type CoreIdentitySection } from '@/data/coreIdentityContent';
 import { Screen, Txt, Card, Button } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
+
+/**
+ * The concise, reflective body of one expanded Core Number accordion -
+ * sourced from the dedicated `coreIdentityContent.ts` (never the detailed
+ * `coreNumberContent.ts`, which remains exclusive to the Blueprint tab), so
+ * it reads correctly for any of the 12 possible values a category can
+ * resolve to, not just one example number.
+ */
+function ExpandedNumberContent({ section }: { section: CoreIdentitySection }) {
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View style={{ gap: 4 }}>
+        <Txt variant="label" color="textMuted" style={{ fontSize: 11 }}>
+          SHORT REFLECTIVE INTERPRETATION
+        </Txt>
+        <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
+          {section.shortInterpretation}
+        </Txt>
+      </View>
+
+      <View style={{ gap: 4 }}>
+        <Txt variant="label" color="textMuted" style={{ fontSize: 11 }}>
+          YOU MAY NOTICE
+        </Txt>
+        <Txt variant="body" style={{ fontSize: 13, lineHeight: 20 }}>
+          {section.youMayNotice}
+        </Txt>
+      </View>
+    </View>
+  );
+}
 
 export default function BlueprintResultScreen() {
   const theme = useTheme();
@@ -34,6 +69,18 @@ export default function BlueprintResultScreen() {
   const dest = (report?.destiny ?? 5) as number;
   const su = (report?.soulUrge ?? 8) as number;
 
+  // A reflective, non-deterministic Summary paragraph built from the same
+  // short theme phrases `coreNumberContent.ts` already exports for this
+  // exact purpose ("Exported so other content-layer modules... can reuse
+  // this exact short phrase") - so it reads correctly for every possible
+  // Life Path/Destiny/Soul Urge value, not just one example combination.
+  const summaryText =
+    `These three numbers suggest a pattern worth noticing, not a verdict. ` +
+    `You may naturally lean into ${summaryThemeFor('lifePath', lp)} (Life Path ${lp}), ` +
+    `and the way you tend to contribute often reflects ${summaryThemeFor('destiny', dest)} (Destiny ${dest}). ` +
+    `Underneath both, what may feel most satisfying is ${summaryThemeFor('soulUrge', su)} (Soul Urge ${su}). ` +
+    `Seen together, these qualities can sit alongside each other in plenty of ways — this is just one lens for thinking about yourself.`;
+
   const lifePathInfo = LIFE_PATH_ARCHETYPES[lp] || LIFE_PATH_ARCHETYPES[9] || {
     title: 'The Seeker',
     archetype: 'The Seeker',
@@ -50,6 +97,18 @@ export default function BlueprintResultScreen() {
     description: 'Craving personal independence, leadership, and purposeful impact.',
   };
 
+  // Expanded accordion content - the concise, reflective body from the
+  // dedicated coreIdentityContent.ts (never the detailed coreNumberContent.ts,
+  // which remains exclusive to the Blueprint tab), dynamic for the user's
+  // actual values. Collapsed-state headers above still use
+  // lifePathInfo/destinyInfo/soulUrgeInfo's `.title`, unchanged.
+  const lifePathSection = getCoreIdentitySection('lifePath', lp);
+  const destinySection = getCoreIdentitySection('destiny', dest);
+  const soulUrgeSection = getCoreIdentitySection('soulUrge', su);
+
+  // All three sections start collapsed. Each has independent expand state,
+  // so multiple can be open at once. Opening a section immediately marks it
+  // explored; closing it again never clears that explored status.
   const [expanded, setExpanded] = useState({
     lifePath: false,
     destiny: false,
@@ -65,35 +124,22 @@ export default function BlueprintResultScreen() {
   const toggleSection = (key: 'lifePath' | 'destiny' | 'soulUrge') => {
     void Haptics.selectionAsync();
     setExpanded((prev) => {
-      const nextState = !prev[key];
-      if (nextState) {
+      const next = !prev[key];
+      if (next) {
         setExplored((e) => ({ ...e, [key]: true }));
       }
-      return { ...prev, [key]: nextState };
+      return { ...prev, [key]: next };
     });
-  };
-
-  const markExplored = (key: 'lifePath' | 'destiny' | 'soulUrge') => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setExplored((prev) => ({ ...prev, [key]: true }));
-    setExpanded((prev) => ({ ...prev, [key]: false }));
   };
 
   const exploredCount = [explored.lifePath, explored.destiny, explored.soulUrge].filter(Boolean).length;
   const allExplored = explored.lifePath && explored.destiny && explored.soulUrge;
 
   return (
-    <Screen>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: spacing.md,
-          paddingTop: 56,
-          paddingBottom: spacing.xxl,
-        }}
-      >
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <Screen>
         {/* Navigation & Header */}
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.xs, marginTop: spacing.md }}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.back()}>
               <Txt variant="label" style={{ color: theme.colors.primary, fontWeight: '700' }}>
@@ -105,14 +151,17 @@ export default function BlueprintResultScreen() {
             </Txt>
           </View>
           <Txt variant="heading">Core Identity Revealed</Txt>
+          <Txt variant="body" color="textMuted">
+            Your Core Numbers highlight three important aspects of your personal blueprint. Life Path reflects your overall life direction, Destiny relates to how you express your abilities, and Soul Urge speaks to your inner motivations.
+          </Txt>
         </View>
 
         {/* Calculation Info Card */}
         <Card style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}>
           <Txt variant="caption" color="textMuted" style={{ lineHeight: 18 }}>
-            ✨ Calculated using your full birth name (
+            ✨ Calculated using your full name (
             <Txt variant="caption" style={{ fontWeight: '700', color: theme.colors.text }}>{fullName}</Txt>) and date of birth (
-            <Txt variant="caption" style={{ fontWeight: '700', color: theme.colors.text }}>{birthDate}</Txt>).
+            <Txt variant="caption" style={{ fontWeight: '700', color: theme.colors.text }}>{formatUSDate(birthDate)}</Txt>).
           </Txt>
         </Card>
 
@@ -148,7 +197,7 @@ export default function BlueprintResultScreen() {
         <Card style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', gap: spacing.xs }}>
           <View style={styles.badgeRow}>
             <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800' }}>
-              TAP TO REVEAL YOUR BLUEPRINT
+              EXPLORE YOUR CORE NUMBERS
             </Txt>
             <View style={styles.pillBadge}>
               <Txt variant="caption" style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11 }}>
@@ -157,7 +206,7 @@ export default function BlueprintResultScreen() {
             </View>
           </View>
           <Txt variant="body" style={{ color: '#4338CA', fontSize: 13, lineHeight: 18 }}>
-            Expand each section below to uncover what your numbers mean. Your personalized Summary will unlock once all three are explored.
+            Open each section below to explore what your numbers may suggest. Your personalized Summary will appear once you've explored all three.
           </Txt>
         </Card>
 
@@ -175,7 +224,7 @@ export default function BlueprintResultScreen() {
               onPress={() => toggleSection('lifePath')}
             >
               <Txt variant="heading" style={{ fontSize: 15, flex: 1 }}>
-                {expanded.lifePath ? '▲' : '▼'} 🧭 LIFE PATH {lp}: {lifePathInfo.title}
+                {expanded.lifePath ? '▲' : '▼'} 🧭 LIFE PATH {lp} — {lifePathInfo.title}
               </Txt>
               {explored.lifePath && (
                 <Txt variant="body" style={{ color: '#16A34A', fontWeight: '800' }}>✓</Txt>
@@ -184,20 +233,7 @@ export default function BlueprintResultScreen() {
 
             {expanded.lifePath && (
               <View style={styles.accordionBody}>
-                <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
-                  {lifePathInfo.description}
-                </Txt>
-
-                {!explored.lifePath && (
-                  <TouchableOpacity
-                    style={styles.readButton}
-                    onPress={() => markExplored('lifePath')}
-                  >
-                    <Txt variant="caption" style={{ color: '#166534', fontWeight: '700' }}>
-                      ✅ I've explored this
-                    </Txt>
-                  </TouchableOpacity>
-                )}
+                <ExpandedNumberContent section={lifePathSection} />
               </View>
             )}
           </View>
@@ -212,7 +248,7 @@ export default function BlueprintResultScreen() {
               onPress={() => toggleSection('destiny')}
             >
               <Txt variant="heading" style={{ fontSize: 15, flex: 1 }}>
-                {expanded.destiny ? '▲' : '▼'} 🎯 DESTINY {dest}: {destinyInfo.title}
+                {expanded.destiny ? '▲' : '▼'} 🎯 DESTINY {dest} — {destinyInfo.title}
               </Txt>
               {explored.destiny && (
                 <Txt variant="body" style={{ color: '#16A34A', fontWeight: '800' }}>✓</Txt>
@@ -221,20 +257,7 @@ export default function BlueprintResultScreen() {
 
             {expanded.destiny && (
               <View style={styles.accordionBody}>
-                <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
-                  {destinyInfo.description}
-                </Txt>
-
-                {!explored.destiny && (
-                  <TouchableOpacity
-                    style={styles.readButton}
-                    onPress={() => markExplored('destiny')}
-                  >
-                    <Txt variant="caption" style={{ color: '#166534', fontWeight: '700' }}>
-                      ✅ I've explored this
-                    </Txt>
-                  </TouchableOpacity>
-                )}
+                <ExpandedNumberContent section={destinySection} />
               </View>
             )}
           </View>
@@ -249,7 +272,7 @@ export default function BlueprintResultScreen() {
               onPress={() => toggleSection('soulUrge')}
             >
               <Txt variant="heading" style={{ fontSize: 15, flex: 1 }}>
-                {expanded.soulUrge ? '▲' : '▼'} 💖 SOUL URGE {su}: {soulUrgeInfo.title}
+                {expanded.soulUrge ? '▲' : '▼'} 💖 SOUL URGE {su} — {soulUrgeInfo.title}
               </Txt>
               {explored.soulUrge && (
                 <Txt variant="body" style={{ color: '#16A34A', fontWeight: '800' }}>✓</Txt>
@@ -258,20 +281,7 @@ export default function BlueprintResultScreen() {
 
             {expanded.soulUrge && (
               <View style={styles.accordionBody}>
-                <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
-                  {soulUrgeInfo.description}
-                </Txt>
-
-                {!explored.soulUrge && (
-                  <TouchableOpacity
-                    style={styles.readButton}
-                    onPress={() => markExplored('soulUrge')}
-                  >
-                    <Txt variant="caption" style={{ color: '#166534', fontWeight: '700' }}>
-                      ✅ I've explored this
-                    </Txt>
-                  </TouchableOpacity>
-                )}
+                <ExpandedNumberContent section={soulUrgeSection} />
               </View>
             )}
           </View>
@@ -285,25 +295,22 @@ export default function BlueprintResultScreen() {
                 SUMMARY
               </Txt>
               <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.xs, lineHeight: 18 }}>
-                Your core numbers offer different perspectives on your personality, strengths, motivations, and natural tendencies. Together, they form a personal numerology blueprint based on your name and date of birth.
+                Your core numbers offer different perspectives on your personality, strengths, motivations, and natural tendencies. Together, they offer a personal numerology blueprint based on your name and date of birth.
               </Txt>
               <Txt variant="body" style={{ marginTop: spacing.sm, lineHeight: 22 }}>
-                You lead with <Txt variant="body" color="primary" style={{ fontWeight: '700' }}>{lifePathInfo.archetype || lifePathInfo.title}</Txt> wisdom (Life Path {lp}) and are driven by <Txt variant="body" color="primary" style={{ fontWeight: '700' }}>{soulUrgeInfo.archetype || soulUrgeInfo.title}</Txt> yearning (Soul Urge {su}).
-              </Txt>
-              <Txt variant="caption" color="textMuted" style={{ marginTop: spacing.xs }}>
-                {destinyInfo.title}: Guided toward authentic self-mastery.
+                {summaryText}
               </Txt>
             </Card>
 
             <Card style={styles.darkCard}>
               <Txt variant="label" color="textMuted" style={{ color: '#A5B4FC' }}>
-                ANCIENT SACRED MATRIX
+                THE LO SHU MATRIX
               </Txt>
               <Txt variant="heading" style={{ color: '#FFFFFF', marginTop: spacing.xs }}>
-                Your Matrix Has Been Unlocked
+                A Different Lens on the Same Numbers
               </Txt>
               <Txt variant="body" style={{ color: '#E2E8F0', marginTop: spacing.xs, lineHeight: 20 }}>
-                Your core numbers reveal who you are. The 3,000-year-old Chinese Lo Shu Matrix reveals where your energy flows freely and where it is blocked.
+                So far, you've explored what your Core Numbers may suggest about different aspects of your inner patterns and tendencies. The Lo Shu Matrix looks at the same birth date from a different angle — a traditional 3x3 grid that shows which numbers appear often, and which don't appear at all.
               </Txt>
               <View style={{ marginTop: spacing.md }}>
                 <Button
@@ -314,8 +321,8 @@ export default function BlueprintResultScreen() {
             </Card>
           </>
         )}
-      </ScrollView>
-    </Screen>
+      </Screen>
+    </SafeAreaView>
   );
 }
 

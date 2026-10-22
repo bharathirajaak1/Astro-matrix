@@ -16,7 +16,7 @@ export default function DisclaimerScreen() {
   const handleContinue = () => {
     if (!accepted) return;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/onboarding/system-choice');
+    router.push('/onboarding/details');
   };
 
   return (
@@ -27,7 +27,7 @@ export default function DisclaimerScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backLink}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.step}>Step 3 of 5</Text>
+          <Text style={styles.step}>Step 3 of 4</Text>
         </View>
 
         {/* Center Header */}
@@ -39,7 +39,7 @@ export default function DisclaimerScreen() {
         {/* Disclaimer Card */}
         <View style={styles.card}>
           <Text style={styles.bodyText}>
-            Astro-Matrix is a reflective self-discovery and mindfulness tool grounded in ancient Lo Shu numerological traditions.
+            AstroMatrix is a reflective self-discovery and mindfulness tool inspired by numerological traditions and designed for personal reflection.
           </Text>
 
           <Text style={styles.bodyText}>
@@ -47,7 +47,7 @@ export default function DisclaimerScreen() {
           </Text>
 
           <Text style={[styles.bodyText, { marginBottom: 0 }]}>
-            Astro-Matrix does not provide medical, legal, mental health, or financial counseling. All life decisions remain fully your own sovereign choice.
+            AstroMatrix does not provide medical, legal, mental health, or financial counseling. All life decisions remain fully your own sovereign choice.
           </Text>
         </View>
 

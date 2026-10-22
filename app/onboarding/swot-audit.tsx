@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 import { buildNumerologyReport } from '@/core/numerology';
@@ -8,6 +9,14 @@ import { buildLoShuGrid } from '@/core/loShu';
 import { NUMBER_TRAITS, LIFE_PATH_ARCHETYPES } from '@/core/archetypes';
 import { Screen, Txt, Card, Button } from '@/ui/components';
 import { spacing, useTheme } from '@/ui/theme';
+import {
+  computeAllExplored,
+  computeExploredCount,
+  selectExpanded,
+  selectExplored,
+  usePatternReviewStore,
+  type PatternReviewSection,
+} from '@/features/onboarding/patternReviewStore';
 
 const GRID_ORDER = [4, 9, 2, 3, 5, 7, 8, 1, 6];
 
@@ -70,62 +79,30 @@ export default function SwotAuditScreen() {
     .filter(Boolean)
     .join('; ')}. Your strengths already point the way — use what comes naturally to you to build what your blueprint is asking for.`;
 
-  const [expanded, setExpanded] = useState({
-    strengths: false,
-    weaknesses: false,
-    opportunities: false,
-    blindSpot: false,
-  });
+  // Keyed by profile id in `usePatternReviewStore`, not local `useState` -
+  // local state is reset to defaults every time this screen is popped (Back)
+  // and pushed again, since React Navigation/Expo Router unmounts a popped
+  // screen entirely. The store is module-scoped, so it survives that
+  // unmount/remount cycle, and is isolated per profile id so switching
+  // profiles never surfaces another profile's expanded/explored state.
+  const profileId = profile?.id ?? null;
+  const expanded = usePatternReviewStore(selectExpanded(profileId));
+  const explored = usePatternReviewStore(selectExplored(profileId));
+  const toggleSectionInStore = usePatternReviewStore((s) => s.toggleSection);
 
-  const [explored, setExplored] = useState({
-    strengths: false,
-    weaknesses: false,
-    opportunities: false,
-    blindSpot: false,
-  });
-
-  const toggleSection = (key: 'strengths' | 'weaknesses' | 'opportunities' | 'blindSpot') => {
+  const toggleSection = (key: PatternReviewSection) => {
     void Haptics.selectionAsync();
-    setExpanded((prev) => {
-      const next = !prev[key];
-      if (next) {
-        setExplored((e) => ({ ...e, [key]: true }));
-      }
-      return { ...prev, [key]: next };
-    });
+    toggleSectionInStore(profileId, key);
   };
 
-  const markExplored = (key: 'strengths' | 'weaknesses' | 'opportunities' | 'blindSpot') => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setExplored((prev) => ({ ...prev, [key]: true }));
-    setExpanded((prev) => ({ ...prev, [key]: false }));
-  };
-
-  const exploredCount = [
-    explored.strengths,
-    explored.weaknesses,
-    explored.opportunities,
-    explored.blindSpot,
-  ].filter(Boolean).length;
-
-  const allExplored =
-    explored.strengths &&
-    explored.weaknesses &&
-    explored.opportunities &&
-    explored.blindSpot;
+  const exploredCount = computeExploredCount(explored);
+  const allExplored = computeAllExplored(explored);
 
   return (
-    <Screen>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: spacing.md,
-          paddingTop: 56,
-          paddingBottom: spacing.xxl,
-        }}
-      >
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <Screen>
         {/* Header */}
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.xs, marginTop: spacing.md }}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.back()}>
               <Txt variant="label" style={{ color: theme.colors.primary, fontWeight: '700' }}>
@@ -133,19 +110,28 @@ export default function SwotAuditScreen() {
               </Txt>
             </TouchableOpacity>
             <Txt variant="label" color="textMuted">
-              {isBlueprintContext ? 'PERSONAL ENERGY AUDIT' : 'STEP 3 OF 3: ENERGETIC AUDIT'}
+              STEP 3 OF 3: PERSONAL PATTERN REVIEW
             </Txt>
           </View>
-          <Txt variant="heading" style={{ textAlign: 'left' }}>
-            Your Personal SWOT
+          <Txt variant="heading" style={{ textAlign: 'left', fontSize: 21, fontWeight: '700' }}>
+            Your Personal Pattern Review
           </Txt>
+
+          <View style={{ gap: spacing.xs }}>
+            <Txt variant="heading" style={{ fontSize: 17 }}>
+              Four Perspectives on Your Pattern
+            </Txt>
+            <Txt variant="body" style={{ fontSize: 13, lineHeight: 20 }}>
+              Your Lo Shu pattern offers another way to look at the numbers in your birth date. This review brings those patterns together through four perspectives — qualities you may naturally draw on, areas to explore, opportunities to develop, and patterns that may be easy to overlook.
+            </Txt>
+          </View>
         </View>
 
         {/* Progress Tracker Banner */}
         <Card style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', gap: spacing.xs }}>
           <View style={styles.rowBetween}>
-            <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800' }}>
-              COMPLETE YOUR ENERGETIC AUDIT
+            <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800', flex: 1 }}>
+              EXPLORE YOUR PERSONAL PATTERN
             </Txt>
             <View style={styles.pillBadge}>
               <Txt variant="caption" style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 11 }}>
@@ -154,7 +140,7 @@ export default function SwotAuditScreen() {
             </View>
           </View>
           <Txt variant="body" style={{ color: '#4338CA', fontSize: 13, lineHeight: 18 }}>
-            Expand each quadrant below to uncover your Strengths, Weaknesses, Opportunities, and Blind Spot.
+            Open each section below to explore different aspects of the pattern in your birth date.
           </Txt>
         </Card>
 
@@ -170,7 +156,7 @@ export default function SwotAuditScreen() {
                 {expanded.strengths ? '▲' : '▼'} ⚡ STRENGTHS
               </Txt>
               <Txt variant="caption" style={{ color: '#15803D', fontWeight: '600' }}>
-                Your Core Power
+                Qualities You May Draw On
               </Txt>
             </View>
             {explored.strengths && (
@@ -185,17 +171,6 @@ export default function SwotAuditScreen() {
                   • <Txt variant="body" style={{ fontWeight: '700', color: '#14532D' }}>Number {d}:</Txt> {NUMBER_TRAITS[d]?.activeTrait}
                 </Txt>
               ))}
-
-              {!explored.strengths && (
-                <TouchableOpacity
-                  style={styles.readButtonGreen}
-                  onPress={() => markExplored('strengths')}
-                >
-                  <Txt variant="caption" style={{ color: '#166534', fontWeight: '700' }}>
-                    ✅ I've explored my strengths
-                  </Txt>
-                </TouchableOpacity>
-              )}
             </View>
           )}
         </Card>
@@ -209,10 +184,10 @@ export default function SwotAuditScreen() {
           >
             <View style={styles.rowFlex}>
               <Txt variant="heading" style={{ color: '#991B1B', fontSize: 15 }}>
-                {expanded.weaknesses ? '▲' : '▼'} 🌒 WEAKNESSES
+                {expanded.weaknesses ? '▲' : '▼'} 🌒 AREAS TO EXPLORE
               </Txt>
               <Txt variant="caption" style={{ color: '#B91C1C', fontWeight: '600' }}>
-                Your Energy Voids
+                Numbers to Reflect On
               </Txt>
             </View>
             {explored.weaknesses && (
@@ -227,17 +202,6 @@ export default function SwotAuditScreen() {
                   • <Txt variant="body" style={{ fontWeight: '700', color: '#7F1D1D' }}>Number {d}:</Txt> {NUMBER_TRAITS[d]?.missingImpact}
                 </Txt>
               ))}
-
-              {!explored.weaknesses && (
-                <TouchableOpacity
-                  style={styles.readButtonRed}
-                  onPress={() => markExplored('weaknesses')}
-                >
-                  <Txt variant="caption" style={{ color: '#991B1B', fontWeight: '700' }}>
-                    ✅ I've explored my weaknesses
-                  </Txt>
-                </TouchableOpacity>
-              )}
             </View>
           )}
         </Card>
@@ -254,7 +218,7 @@ export default function SwotAuditScreen() {
                 {expanded.opportunities ? '▲' : '▼'} 🎯 OPPORTUNITIES
               </Txt>
               <Txt variant="caption" style={{ color: '#2563EB', fontWeight: '600' }}>
-                When Activated
+                Ways to Develop
               </Txt>
             </View>
             {explored.opportunities && (
@@ -274,19 +238,8 @@ export default function SwotAuditScreen() {
               </View>
 
               <Txt variant="caption" style={{ color: '#1E40AF', fontStyle: 'italic', marginTop: 4 }}>
-                Bridging these unlocks steady momentum.
+                Exploring these qualities can open up new ways of approaching everyday life.
               </Txt>
-
-              {!explored.opportunities && (
-                <TouchableOpacity
-                  style={styles.readButtonBlue}
-                  onPress={() => markExplored('opportunities')}
-                >
-                  <Txt variant="caption" style={{ color: '#1E40AF', fontWeight: '700' }}>
-                    ✅ I've explored opportunities
-                  </Txt>
-                </TouchableOpacity>
-              )}
             </View>
           )}
         </Card>
@@ -300,10 +253,10 @@ export default function SwotAuditScreen() {
           >
             <View style={styles.rowFlex}>
               <Txt variant="heading" style={{ color: '#92400E', fontSize: 15 }}>
-                {expanded.blindSpot ? '▲' : '▼'} ⚠️ BLIND SPOT
+                {expanded.blindSpot ? '▲' : '▼'} ⚠️ PATTERNS TO NOTICE
               </Txt>
               <Txt variant="caption" style={{ color: '#B45309', fontWeight: '600' }}>
-                Hidden Pattern
+                What May Be Easy to Overlook
               </Txt>
             </View>
             {explored.blindSpot && (
@@ -314,22 +267,11 @@ export default function SwotAuditScreen() {
           {expanded.blindSpot && (
             <View style={styles.accordionBody}>
               <Txt variant="body" style={{ color: '#78350F', fontSize: 13, lineHeight: 19 }}>
-                You start endeavors with immense vision and intuitive spark, but struggle with the repetitive daily routines needed to carry them through.
+                You may bring strong vision and intuitive spark to new ideas, while finding that consistency and routine require more conscious attention.
               </Txt>
               <Txt variant="caption" style={{ color: '#92400E', fontStyle: 'italic', marginTop: 4 }}>
-                This isn't a personal flaw—it's simply a missing frequency you can harmonize.
+                This isn't a personal flaw. It is simply another part of your pattern worth noticing.
               </Txt>
-
-              {!explored.blindSpot && (
-                <TouchableOpacity
-                  style={styles.readButtonYellow}
-                  onPress={() => markExplored('blindSpot')}
-                >
-                  <Txt variant="caption" style={{ color: '#92400E', fontWeight: '700' }}>
-                    ✅ I've explored my blind spot
-                  </Txt>
-                </TouchableOpacity>
-              )}
             </View>
           )}
         </Card>
@@ -350,21 +292,21 @@ export default function SwotAuditScreen() {
         {allExplored && (
           <Card style={styles.paywallCard}>
             <Txt variant="label" style={{ color: '#FCD34D' }}>
-              ⚡ CLOSE YOUR ENERGY GAPS
+              PERSONALIZED NEXT STEPS
             </Txt>
             <Txt variant="heading" style={{ color: '#FFFFFF', marginTop: spacing.xs }}>
               From Insight to Transformation
             </Txt>
             <Txt variant="body" style={{ color: '#E2E8F0', marginTop: spacing.xs, lineHeight: 20 }}>
-              You now understand your core identity (Life Path {lp}) and exactly where your energetic leaks occur (Missing {missingDigits.join(', ')}).
+              Your Personal Pattern Review has highlighted the numbers that appear in your birth date and those that don't. Your personalized daily activations offer simple practices designed around your individual pattern.
             </Txt>
             <Txt variant="caption" style={{ color: '#CBD5E1', marginTop: spacing.xs, lineHeight: 18 }}>
-              Knowing your gaps changes nothing without alignment. Your personalized Remedy Engine provides tailored daily frequencies, grounding colors, and micro-rituals to harmonize each missing number.
+              Explore tailored frequencies, grounding colors, and mindful practices that you can incorporate into your daily routine.
             </Txt>
 
             <View style={{ marginTop: spacing.md }}>
               <Button
-                label="Unlock My Tailored Remedies →"
+                label="Unlock Daily Activations →"
                 onPress={() => router.push('/paywall')}
               />
             </View>
@@ -377,14 +319,10 @@ export default function SwotAuditScreen() {
                 Continue with free daily forecast
               </Txt>
             </TouchableOpacity>
-
-            <Txt variant="caption" style={{ color: '#64748B', textAlign: 'center', marginTop: 4 }}>
-              Join 10,000+ seekers who've balanced their energetic matrix
-            </Txt>
           </Card>
         )}
-      </ScrollView>
-    </Screen>
+      </Screen>
+    </SafeAreaView>
   );
 }
 
@@ -399,17 +337,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   rowFlex: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 2,
+    flex: 1,
   },
   pillBadge: {
     backgroundColor: '#4F46E5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
+    flexShrink: 0,
   },
   cardStrengths: {
     backgroundColor: '#F0FDF4',

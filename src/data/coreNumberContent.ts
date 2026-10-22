@@ -22,7 +22,6 @@
  */
 import { reduceNumber } from '@/core/numerology';
 import type { CoreNumber, NumerologyReport } from '@/core/types';
-import { NUMBER_ESSENCE, type NumberEssence } from './numberEssence';
 
 export type CoreNumberKey = 'lifePath' | 'destiny' | 'soulUrge' | 'personality' | 'birthday';
 
@@ -55,10 +54,6 @@ function knownDigitFor(value: number): number {
   return reduceNumber(value, true).value;
 }
 
-function essenceFor(value: number): NumberEssence {
-  return NUMBER_ESSENCE[knownDigitFor(value)] ?? NUMBER_ESSENCE[9];
-}
-
 // ---------------------------------------------------------------------------
 // "Your Interpretation" - the user's specific value, by category.
 // Life Path has its own plain-English content further below
@@ -69,11 +64,19 @@ function essenceFor(value: number): NumberEssence {
 // voice and to always explain a compound day's reduction BEFORE its
 // traditional meaning. Personality, Destiny and Soul Urge (see
 // `PERSONALITY_CONTENT`, `DESTINY_CONTENT` and `SOUL_URGE_CONTENT` below)
-// each have their own bespoke content for the same reason Life Path does -
-// the generic `NUMBER_ESSENCE` + `CATEGORY_FRAMING` machinery reads too
-// abstract/template-y for the richer, situational treatment approved for
-// them. Birthday is now the only category still generated from that shared
-// machinery.
+// each have their own bespoke content for the same reason Life Path does.
+// Birthday's `showsUpAs`/`strengths`/`mindfulOf`/`howToUse` text (see
+// `BIRTHDAY_CONTENT` below) was, until the AstroMatrix "Birth Chart PDF
+// Quality Improvement" task, still generated from a generic
+// `NUMBER_ESSENCE` + per-category template-function machinery - every
+// "How It May Show Up" item literally read "A practical, everyday knack
+// related to X", every strength "A practical asset: Y.", every mindful-of
+// note "Worth keeping in mind day to day: Z.", and `howToUse` was the exact
+// same sentence for all twelve possible Birthday values (its one parameter
+// was never even read). `BIRTHDAY_CONTENT` replaces that with the same kind
+// of bespoke, naturally-varied prose the other four categories already have
+// - Birthday is now the last category to receive this treatment, so all
+// five Core Numbers are consistently hand-authored.
 // ---------------------------------------------------------------------------
 
 /**
@@ -137,35 +140,256 @@ function assertNever(key: never): never {
   throw new Error(`Unhandled CoreNumberKey: ${String(key)}`);
 }
 
-// ---------------------------------------------------------------------------
-// Per-category framing - the same `NumberEssence` facts, reworded through
-// each category's own lens so the five Core Numbers read as five distinct
-// concepts rather than the same content repeated five times (even when two
-// of a person's Core Numbers happen to share the same underlying value).
-// ---------------------------------------------------------------------------
+const BIRTHDAY_REPRESENTS =
+  'Birthday is traditionally associated with a set of natural qualities linked to the specific day of the month you were born - a supporting layer alongside the other four Core Numbers. It is taken directly from that day, without reducing it.';
 
-interface CategoryFraming {
-  represents: string;
-  showUp: (theme: string) => string;
-  strength: (strength: string) => string;
-  mindful: (note: string) => string;
-  howToUse: (essence: NumberEssence) => string;
+interface BirthdayEntry {
+  showsUpAs: string[];
+  strengths: string[];
+  mindfulOf: string[];
+  howToUse: string;
 }
 
-/** Life Path, Personality, Destiny and Soul Urge are deliberately absent
- *  here - each has its own bespoke content below (`LIFE_PATH_CONTENT`,
- *  `PERSONALITY_CONTENT`, `DESTINY_CONTENT`, `SOUL_URGE_CONTENT`), not
- *  generated from this generic framing. */
-const CATEGORY_FRAMING: Record<Exclude<CoreNumberKey, 'lifePath' | 'personality' | 'destiny' | 'soulUrge'>, CategoryFraming> = {
-  birthday: {
-    represents:
-      'Birthday is traditionally associated with a set of natural qualities linked to the specific day of the month you were born - a supporting layer alongside the other four Core Numbers. It is taken directly from that day, without reducing it.',
-    showUp: (theme) => `A practical, everyday knack related to ${theme}`,
-    strength: (strength) => `A practical asset: ${strength}.`,
-    mindful: (note) => `Worth keeping in mind day to day: ${note}.`,
-    howToUse: () => 'This can be a useful quality to draw on deliberately in ordinary, practical moments - at work, at home, or in how you approach a task.',
+/**
+ * Bespoke, naturally-varied content for each Birthday value (1-9, 11, 22,
+ * 33), replacing the old generic template machinery (see the doc comment
+ * above). Each entry is grounded in the same traditional associations
+ * already approved for this number - `BIRTHDAY_THEMES` above (the specific
+ * everyday-life framing already used for Birthday's `yourInterpretation`)
+ * and the shared `strengths`/`mindfulOf` facts in `NUMBER_ESSENCE`
+ * (src/data/numberEssence.ts) - reworded into full, varied sentences rather
+ * than three facts run through an identical sentence shape. Consistent with
+ * Birthday's own established character (a smaller, everyday/practical
+ * layer, not the primary Core Number), every entry stays grounded in
+ * ordinary, day-to-day situations rather than broad life claims.
+ */
+const BIRTHDAY_CONTENT: Record<number, BirthdayEntry> = {
+  1: {
+    showsUpAs: [
+      'On an ordinary day, you may be the one who decides what happens next, without waiting to be asked.',
+      'Small everyday choices - where to eat, which route to take - often get made quickly rather than debated.',
+      'An idea that occurs to you may get acted on right away, rather than written down for later.',
+    ],
+    strengths: [
+      'A willingness to go first, even in small everyday moments, can make you the one others end up following.',
+      'Routine choices tend to feel easy rather than draining, because you generally know your own mind.',
+      'Momentum rarely stalls around you - once something seems worth doing, it tends to happen.',
+    ],
+    mindfulOf: [
+      'It can be easy to handle something solo that would have gone more smoothly with a second pair of hands.',
+      'A slow-moving day or a stalled plan may wear on your patience more than it does for most people.',
+    ],
+    howToUse:
+      "This everyday independence is worth leaning on when a decision needs to be made quickly and no one else is stepping up. It can help, just as often, to ask whether company or a second opinion might make today's task lighter.",
+  },
+  2: {
+    showsUpAs: [
+      'You may notice when someone nearby has gone quiet, often before they say anything is wrong.',
+      'Everyday plans tend to get made together rather than announced - checking in feels more natural than deciding alone.',
+      "A tense moment in a room rarely escapes you, even when no one else seems to register it.",
+    ],
+    strengths: [
+      'People often feel at ease around you without quite knowing why - your presence tends to settle things down.',
+      'You tend to build trust steadily, through small consistent gestures rather than grand ones.',
+      "Reading what a room needs, moment to moment, comes naturally rather than taking conscious effort.",
+    ],
+    mindfulOf: [
+      'Keeping the peace can come at the cost of saying what you actually think.',
+      "Someone else's mood can end up shaping your own day more than it probably should.",
+    ],
+    howToUse:
+      "This sensitivity is valuable in any ordinary moment that calls for tact - smoothing over a disagreement, checking in on someone who's struggling. It's worth occasionally voicing your own preference too, rather than only reading the room for everyone else's.",
+  },
+  3: {
+    showsUpAs: [
+      'A flat or quiet room often brightens once you start talking.',
+      'You may reach for a joke or a story before anything else, even in an ordinary conversation.',
+      'Everyday frustrations tend to get talked through out loud rather than carried silently.',
+    ],
+    strengths: [
+      'Putting a feeling or an idea into words rarely feels like hard work for you.',
+      'An optimistic outlook tends to follow you into ordinary days, even unremarkable ones.',
+      "You can shift a room's mood simply by being in it.",
+    ],
+    mindfulOf: [
+      'Several small ideas can pull at your attention at once, leaving little finished by the end of the day.',
+      'Staying upbeat can sometimes mean skipping past a feeling that actually needed more attention.',
+    ],
+    howToUse:
+      'This everyday warmth is worth bringing to any ordinary moment that feels heavier than it needs to - a tense conversation, a dull task. It can also help to let a harder feeling sit for a while before reaching for the joke that usually follows it.',
+  },
+  4: {
+    showsUpAs: [
+      'Ordinary tasks tend to get handled in order, one at a time, rather than all at once.',
+      "You may feel most at ease on a day that's going according to plan.",
+      'People may come to you first when something needs to be done properly rather than quickly.',
+    ],
+    strengths: [
+      "A methodical approach to the day's small tasks tends to mean little gets dropped.",
+      "Once you commit to something, it usually gets finished - not just started.",
+      'Others can rely on you to follow through, even on an unremarkable day.',
+    ],
+    mindfulOf: [
+      'A plan changing at the last minute can feel more disruptive than it needs to.',
+      'You may end up carrying more of the day\'s responsibilities than is sustainable, simply because you can.',
+    ],
+    howToUse:
+      'This everyday reliability is worth leaning on whenever something ordinary needs to be done properly rather than rushed. It can help to notice when holding a plan too rigidly is costing you more than a little flexibility would.',
+  },
+  5: {
+    showsUpAs: [
+      'An unplanned change to the day rarely throws you the way it might throw someone else.',
+      'You may find yourself drawn to whatever is new or different, even in small everyday choices.',
+      'Plans shifting at the last minute tend to feel more like an opportunity than a problem.',
+    ],
+    strengths: [
+      'New or unfamiliar situations tend to feel comfortable rather than unsettling.',
+      'A wide range of everyday interests keeps ordinary days from feeling repetitive.',
+      'You can adjust quickly when something unexpected changes the plan.',
+    ],
+    mindfulOf: [
+      'A task can lose its appeal partway through, once the newness wears off.',
+      'A fixed routine may feel confining even on the days it would actually help you.',
+    ],
+    howToUse:
+      'This comfort with change is worth drawing on whenever an ordinary day takes an unexpected turn. It can also help to notice when a little routine - even one that feels dull - might be exactly what finishes the thing you started.',
+  },
+  6: {
+    showsUpAs: [
+      'You may notice a space feels off before anyone says so, and quietly tidy or adjust it.',
+      'An ordinary day often includes checking in on someone close to you, without it being asked for.',
+      'Small, practical acts of care - making a meal, running an errand for someone - tend to come naturally.',
+    ],
+    strengths: [
+      'Warmth toward the people close to you shows up in consistent, everyday gestures rather than grand ones.',
+      "You're often the first to step in when something ordinary needs doing for someone else.",
+      'An eye for what a room or situation needs tends to come before you\'ve consciously thought about it.',
+    ],
+    mindfulOf: [
+      "Someone else's concern can end up sitting on your own shoulders as if it were yours.",
+      "Your own needs may quietly go unmet while you look after everyone else's.",
+    ],
+    howToUse:
+      "This everyday attentiveness is worth offering wherever a person or space genuinely needs it. It's worth pairing with an honest look at whether your own ordinary needs are getting the same care you give everyone else's.",
+  },
+  7: {
+    showsUpAs: [
+      'A quiet moment alone, even in the middle of an ordinary day, tends to feel restorative rather than lonely.',
+      'You may notice a small detail in a conversation or a situation that everyone else walked past.',
+      "An everyday decision can turn into a longer, more thoughtful process than it looks like from the outside.",
+    ],
+    strengths: [
+      'A thoughtful, probing mind tends to turn over even routine questions more carefully than most people would.',
+      'Solitude rarely feels uncomfortable to you - if anything, it can feel necessary.',
+      "You often see beneath the surface of an ordinary situation to what's actually going on.",
+    ],
+    mindfulOf: [
+      'Working something out internally can leave the people around you feeling shut out, even without meaning to.',
+      'A straightforward decision can get overthought well past the point of being useful.',
+    ],
+    howToUse:
+      "This reflective habit is worth trusting on any ordinary day when something doesn't quite add up on the surface. It can help to let someone else in on what you're turning over, rather than processing it entirely on your own.",
+  },
+  8: {
+    showsUpAs: [
+      "Even an ordinary to-do list tends to get organised with a clear sense of what matters most.",
+      'You may naturally take charge of an everyday situation that is drifting without direction.',
+      'Small daily goals rarely get abandoned once you have set your mind to them.',
+    ],
+    strengths: [
+      "A clear sense of what you're working toward tends to carry through to ordinary days, not just big ones.",
+      'Taking charge of a disorganised situation tends to come easily, even when no one asked you to.',
+      'Persistence shows up in the small, unglamorous daily effort as much as the big push.',
+    ],
+    mindfulOf: [
+      "Progress that isn't visible yet can feel like no progress at all, even when it is.",
+      'You may stack more onto an ordinary day than is realistic, simply because the goal matters to you.',
+    ],
+    howToUse:
+      "This everyday drive is worth applying to whatever practical goal is in front of you today, however small. It can help to notice effort that hasn't produced a visible result yet - it still counts.",
+  },
+  9: {
+    showsUpAs: [
+      'An everyday disagreement often looks different to you once you have considered both sides of it.',
+      'You may find yourself thinking about people outside your immediate circle, even during an ordinary day.',
+      "Loose ends - an unfinished task, an unresolved conversation - tend to bother you until they're closed.",
+    ],
+    strengths: [
+      'Seeing more than one side of an everyday situation tends to come naturally, even when it would be easier not to.',
+      'Genuine concern for people beyond your immediate circle shows up in small, everyday generosity.',
+      "You're usually the one who brings an ordinary task or conversation to a proper close.",
+    ],
+    mindfulOf: [
+      "A cause or a person you've grown attached to can be hard to step back from, even when it's time.",
+      'Everyday generosity can leave you with little left over for yourself by the end of the day.',
+    ],
+    howToUse:
+      'This wider view is worth drawing on in any ordinary situation that looks one-sided at first glance. It can help to notice when you are giving more of an everyday moment than you are keeping for yourself.',
+  },
+  11: {
+    showsUpAs: [
+      'A small, everyday hunch - about a person, a decision, a plan - often turns out to be right.',
+      'You may notice an idea or a detail that everyone else in the room overlooked.',
+      'An ordinary conversation can leave the other person feeling unexpectedly inspired, without you quite intending it.',
+    ],
+    strengths: [
+      'An instinct this strong, even applied to small daily choices, tends to hold up.',
+      'You can inspire the people around you simply through how you approach an ordinary day.',
+      'Openness to an overlooked idea often leads somewhere useful, even when it looked unlikely at first.',
+    ],
+    mindfulOf: [
+      'Intuition this active can also bring a kind of restless, nervous energy to an otherwise ordinary day.',
+      "A sense of untapped potential can quietly weigh on you, even on days that don't call for anything extraordinary.",
+    ],
+    howToUse:
+      'This everyday intuition is worth trusting on the small hunches, not just the big decisions. It can help to notice when that same sensitivity tips into restlessness, and give the day a little more room to breathe.',
+  },
+  22: {
+    showsUpAs: [
+      'An ordinary task can become the first real step toward something much bigger, almost without you planning it that way.',
+      'You may find yourself thinking in both the big picture and the small practical step at once, even on a routine day.',
+      "A long-term project rarely loses your patience, even when today's piece of it is tedious.",
+    ],
+    strengths: [
+      'Big-picture thinking and practical, everyday execution tend to work together for you rather than pull apart.',
+      'You can sit with a slow, multi-year project without losing the thread of why it matters.',
+      'A steady hand under pressure shows up even in small daily setbacks, not just major ones.',
+    ],
+    mindfulOf: [
+      "The scale of what you can see is possible can make an ordinary day's progress feel small by comparison.",
+      'A standard you have set for yourself may be harder to keep up with day to day than you expect.',
+    ],
+    howToUse:
+      "This everyday capacity for building something real is worth applying to whatever long-term idea is quietly taking shape. It can help to measure today's small progress on its own terms, rather than against the full scale of the vision.",
+  },
+  33: {
+    showsUpAs: [
+      'An ordinary conversation can turn into real support for someone, almost without you trying.',
+      "You may be the person people quietly turn to on a hard day, even when you didn't offer first.",
+      'Helping someone else grow or figure something out tends to happen in small, everyday moments, not just big ones.',
+    ],
+    strengths: [
+      'A pull toward helping others develop shows up even in small, unremarkable interactions.',
+      'Deep empathy tends to be available to the people around you on an ordinary day, not only in a crisis.',
+      'You can hold space for someone going through something difficult without needing to fix it.',
+    ],
+    mindfulOf: [
+      "The emotional weight of the people you're supporting can end up carried by you, day after day.",
+      "Your own needs can quietly slip down the list while you're focused on everyone else's.",
+    ],
+    howToUse:
+      "This everyday generosity is worth offering wherever someone genuinely needs support, however ordinary the moment. It's worth checking, just as often, whether you're holding onto a weight that was never meant to be carried alone.",
   },
 };
+
+function buildBirthdaySection(value: number): CoreNumberSection {
+  const entry = BIRTHDAY_CONTENT[knownDigitFor(value)] ?? BIRTHDAY_CONTENT[9];
+  return {
+    represents: BIRTHDAY_REPRESENTS,
+    yourInterpretation: yourInterpretationFor('birthday', value),
+    ...entry,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Life Path - bespoke, plain-English content per value (1-9, 11, 22, 33).
@@ -1306,17 +1530,7 @@ export function getCoreNumberInterpretation(key: CoreNumberKey, value: number): 
     return buildSoulUrgeSection(value);
   }
 
-  const framing = CATEGORY_FRAMING[key];
-  const essence = essenceFor(value);
-
-  return {
-    represents: framing.represents,
-    yourInterpretation: yourInterpretationFor(key, value),
-    showsUpAs: essence.themes.map(framing.showUp),
-    strengths: essence.strengths.map(framing.strength),
-    mindfulOf: essence.mindfulOf.map(framing.mindful),
-    howToUse: framing.howToUse(essence),
-  };
+  return buildBirthdaySection(value);
 }
 
 // ---------------------------------------------------------------------------

@@ -57,8 +57,15 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="remedies"
         options={{
-          title: 'Remedies',
+          title: 'Daily Activations',
           tabBarIcon: ({ color, size }) => <FontAwesome name="lock" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, size }) => <FontAwesome name="compass" size={size} color={color} />,
         }}
       />
     </Tabs>

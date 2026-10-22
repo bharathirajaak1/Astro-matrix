@@ -11,6 +11,32 @@ export const LO_SHU_LAYOUT: readonly (readonly Digit[])[] = [
   [8, 1, 6],
 ];
 
+/** `LO_SHU_LAYOUT` flattened into its canonical reading order: 4, 9, 2, 3, 5, 7, 8, 1, 6. */
+const LO_SHU_ORDER: readonly Digit[] = LO_SHU_LAYOUT.flat();
+
+/**
+ * Reorders `numbers` to match the Lo Shu grid's canonical sequence
+ * (4, 9, 2, 3, 5, 7, 8, 1, 6), derived from `LO_SHU_LAYOUT` rather than
+ * duplicating it. Pure: never mutates `numbers`. Preserves membership
+ * exactly - every supplied number appears in the result exactly as many
+ * times as it was supplied, with nothing added and nothing dropped. An
+ * empty array returns an empty array; a subset returns just that subset,
+ * in Lo Shu order regardless of the order it was supplied in.
+ */
+export function orderByLoShuLayout(numbers: readonly Digit[]): Digit[] {
+  const ordered: Digit[] = [];
+  const remaining = [...numbers];
+  for (const digit of LO_SHU_ORDER) {
+    let index = remaining.indexOf(digit);
+    while (index !== -1) {
+      ordered.push(digit);
+      remaining.splice(index, 1);
+      index = remaining.indexOf(digit);
+    }
+  }
+  return ordered;
+}
+
 interface Line {
   name: string;
   cells: readonly Digit[];

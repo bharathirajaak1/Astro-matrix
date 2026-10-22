@@ -23,7 +23,7 @@ export default function OnboardingHookScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backLink}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.step}>Step 2 of 5</Text>
+          <Text style={styles.step}>Step 2 of 4</Text>
         </View>
 
         {/* Narrative Header */}
@@ -37,15 +37,29 @@ export default function OnboardingHookScreen() {
         {/* Narrative Card */}
         <View style={styles.card}>
           <Text style={styles.bodyText}>
-            From ancient Greek philosophers to Indian sages, numbers have always been the bridge between the cosmos and the individual. Your Name and Date of Birth aren't random—they are a unique vibrational fingerprint.
+            Every name and date of birth carries a unique set of numbers that can be explored through numerology. These numbers offer a way to reflect on your natural tendencies, strengths, and areas of focus.
+          </Text>
+
+          <Text style={styles.subsectionHeading}>The Ancient Wisdom of Numbers</Text>
+
+          <Text style={styles.bodyText}>
+            The roots of the Pythagorean tradition reach back to ancient Greece, more than 2,500 years ago. Pythagorean thinkers explored the idea that numbers could reveal patterns, relationships, and harmony in the world around us.
           </Text>
 
           <Text style={styles.bodyText}>
-            Inside you lies 50% of your ultimate potential. The other 50% is about understanding the unseen patterns—your hidden strengths, your blind spots, and the opportunities knocking at your door.
+            Over the centuries, these ideas influenced philosophical and mathematical traditions and inspired continued exploration of the deeper significance of numbers.
+          </Text>
+
+          <Text style={[styles.bodyText, styles.bodyTextBold]}>
+            AstroMatrix brings this tradition into a modern, personal experience.
+          </Text>
+
+          <Text style={styles.bodyText}>
+            Using the <Text style={styles.bodyTextBold}>Pythagorean numerology system</Text>, AstroMatrix explores the numbers associated with your name and date of birth to create your personal blueprint, understand your core numbers, and identify areas for self-reflection and personal growth.
           </Text>
 
           <Text style={[styles.bodyText, { marginBottom: 0 }]}>
-            Astro-Matrix doesn't just give you numbers; it gives you a roadmap to turn your blockers into stepping stones. Are you ready to see what the cosmos has written for you?
+            Your numbers are not a fixed destiny. They are a starting point for understanding yourself, gaining perspective, and making more conscious choices.
           </Text>
         </View>
 
@@ -119,6 +133,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#44403C',
     lineHeight: 22,
+  },
+  // A subsection heading within the existing Narrative Card (not a separate
+  // card) - stronger/darker than `bodyText` so it reads as a distinct
+  // heading, but clearly smaller than `title` so the main heading stays
+  // the strongest element on the screen.
+  subsectionHeading: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1C1917',
+  },
+  // Weight-only override, layered on top of `bodyText` (or inline within
+  // it) to bold a sentence/phrase without changing size, color, or
+  // line-height.
+  bodyTextBold: {
+    fontWeight: '700',
   },
   primaryButton: {
     backgroundColor: '#57715E',

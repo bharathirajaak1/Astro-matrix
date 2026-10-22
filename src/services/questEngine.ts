@@ -1,4 +1,6 @@
 import { EXPANDED_REMEDIES, ElaboratedRemedy } from '../data/expandedRemedies';
+import { DIGITS } from '@/core/numerology';
+import { orderByLoShuLayout } from '@/core/loShu';
 import type { Digit } from '@/core/types';
 import type { PracticeDay, PracticeLibrary } from '@/data/practiceLibrary';
 
@@ -95,6 +97,127 @@ export function resolveActiveNumber(
   const remainingMissing = missingNumbers.filter((n) => !completedCycleNumbers.includes(n));
   const sortedRemaining = HEALING_PRIORITY_ORDER.filter((n) => remainingMissing.includes(n as Digit));
   return sortedRemaining.length > 0 ? (sortedRemaining[0] as Digit) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Daily Activations Focus Number resolver.
+//
+// Entirely additive and separate from `resolveActiveNumber`/
+// `HEALING_PRIORITY_ORDER`/`computeQuestHierarchy` above, which continue to
+// power the existing 21-day cycle unchanged. This resolver deliberately has
+// no equivalent of `completedCycleNumbers` - repetition of a Focus Number
+// across the 21-day journey is intentional, not a bug to guard against.
+// ---------------------------------------------------------------------------
+
+/**
+ * The digits tied for the lowest value in `counts` (one or more), in
+ * numeric ascending order - the pool consulted once there is no missing (or
+ * no eligible missing) number left to work on. Extracted so
+ * `resolveFocusNumber` and `resolveCurrentFocusNumber` below fall back
+ * identically, rather than each recomputing this. Returns `[]` (never
+ * throws) for a malformed `counts` missing a digit's entry - `Math.min`
+ * over any `undefined` values yields `NaN`, which nothing in `counts` can
+ * ever equal, so the filter below naturally comes back empty.
+ */
+function leastRepresentedPool(counts: Record<Digit, number>): Digit[] {
+  const minCount = Math.min(...DIGITS.map((d) => counts[d]));
+  return DIGITS.filter((d) => counts[d] === minCount);
+}
+
+/**
+ * The Focus Number for a given day, under the new Daily Activations rule:
+ *
+ *  - `missingNumbers` non-empty -> the pool IS the missing numbers (sorted
+ *    numeric ascending). Present-but-low-count numbers are never considered
+ *    while any number is missing - missing numbers are always the primary
+ *    pool.
+ *  - `missingNumbers` empty -> the pool is `leastRepresentedPool(counts)`.
+ *
+ * The Focus Number is then `pool[(cycleDay - 1) % pool.length]` - the pool
+ * rotates deterministically across the 21-day journey, and a number
+ * reappearing later in the cycle is expected, not an error.
+ *
+ * Pure and side-effect-free: never mutates `missingNumbers`, never
+ * recalculates the Lo Shu grid (reads the already-computed `counts` from
+ * `buildLoShuGrid()` instead). Returns `null`, never throws, if the
+ * resulting pool is empty (e.g. a malformed `counts` missing a digit's
+ * entry). `cycleDay` is expected to be 1-21 for the normal application
+ * path - no behavior beyond the formula above is defined outside that
+ * range.
+ *
+ * Kept exactly as-is (unchanged behavior/signature) since `remedies.tsx`
+ * still calls this directly - see `resolveCurrentFocusNumber` below for the
+ * unified Lo-Shu-ordered, completed-cycle-aware replacement rule, which
+ * does not yet have any call site of its own.
+ */
+export function resolveFocusNumber(
+  missingNumbers: Digit[],
+  counts: Record<Digit, number>,
+  cycleDay: number,
+): Digit | null {
+  const pool = missingNumbers.length > 0 ? [...missingNumbers].sort((a, b) => a - b) : leastRepresentedPool(counts);
+
+  if (pool.length === 0) return null;
+  return pool[(cycleDay - 1) % pool.length];
+}
+
+// ---------------------------------------------------------------------------
+// Unified current-focus-number resolver (Daily Activations v2 rule).
+//
+// Additive - does not replace `resolveFocusNumber` (content selection, used
+// by `remedies.tsx` today) or `resolveActiveNumber` (completed-cycle
+// crediting, used by `ritualStore.ts` today). Both stay exactly as they are
+// until a later step switches their call sites over to this resolver, at
+// which point the displayed number and the credited number become the same
+// number by construction, rather than two independently-computed ones.
+// ---------------------------------------------------------------------------
+
+/**
+ * The single number to work on right now, under the approved v2 rule:
+ *
+ *  - Missing numbers come first, in Lo Shu grid order (`orderByLoShuLayout`
+ *    - 4, 9, 2, 3, 5, 7, 8, 1, 6 - rather than `resolveFocusNumber`'s
+ *    numeric-ascending order), excluding any already present in
+ *    `completedCycleNumbers` - a missing number whose 21-day cycle already
+ *    finished is never selected again. The first eligible one in that order
+ *    is the result: one number is worked on at a time, to completion,
+ *    before the next eligible one is ever chosen.
+ *  - If no missing number is eligible - either `missingNumbers` is empty,
+ *    or every missing number has already completed its cycle - falls back
+ *    to `leastRepresentedPool(counts)`, rotating deterministically by
+ *    `cycleDay` (`pool[(cycleDay - 1) % pool.length]`), exactly as
+ *    `resolveFocusNumber`'s own "no missing numbers" fallback already does.
+ *    This is the smallest compatible way to satisfy "preserve the
+ *    previously documented fallback... with deterministic rotation" here:
+ *    reusing the exact same day-indexed formula, rather than inventing a
+ *    new rotation rule, keeps the two resolvers' fallback behavior
+ *    identical and easy to compare.
+ *  - Returns `null`, never throws, only if that fallback pool is itself
+ *    empty (a malformed `counts`) - matching `resolveFocusNumber`'s own
+ *    contract. Note this resolver does NOT return `null` merely because
+ *    every missing number is completed; whether/how to surface an
+ *    "everything is done" state to the user is a separate, not-yet-decided
+ *    product question - this resolver always has *something* eligible to
+ *    return as long as `counts` is well-formed.
+ *
+ * Pure: never mutates `missingNumbers` or `completedCycleNumbers`.
+ */
+export function resolveCurrentFocusNumber(
+  missingNumbers: Digit[],
+  completedCycleNumbers: Digit[],
+  counts: Record<Digit, number>,
+  cycleDay: number,
+): Digit | null {
+  const eligibleMissing = orderByLoShuLayout(missingNumbers).filter(
+    (n) => !completedCycleNumbers.includes(n),
+  );
+  if (eligibleMissing.length > 0) {
+    return eligibleMissing[0];
+  }
+
+  const pool = leastRepresentedPool(counts);
+  if (pool.length === 0) return null;
+  return pool[(cycleDay - 1) % pool.length];
 }
 
 /**

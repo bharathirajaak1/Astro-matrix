@@ -1,4 +1,4 @@
-import { LO_SHU_LAYOUT, buildLoShuGrid, loShuDigits } from '../../src/core/loShu';
+import { LO_SHU_LAYOUT, buildLoShuGrid, loShuDigits, orderByLoShuLayout } from '../../src/core/loShu';
 
 describe('LO_SHU_LAYOUT', () => {
   test('is the fixed magic square', () => {
@@ -15,6 +15,40 @@ describe('LO_SHU_LAYOUT', () => {
       expect(row[0] + row[1] + row[2]).toBe(15);
       expect(LO_SHU_LAYOUT[0][i] + LO_SHU_LAYOUT[1][i] + LO_SHU_LAYOUT[2][i]).toBe(15);
     }
+  });
+});
+
+describe('orderByLoShuLayout', () => {
+  test('all nine numbers are reordered to the canonical Lo Shu sequence', () => {
+    expect(orderByLoShuLayout([1, 2, 3, 4, 5, 6, 7, 8, 9])).toEqual([4, 9, 2, 3, 5, 7, 8, 1, 6]);
+  });
+
+  test('a subset supplied in a deliberately different order is still placed in Lo Shu order', () => {
+    expect(orderByLoShuLayout([1, 8, 3])).toEqual([3, 8, 1]);
+    expect(orderByLoShuLayout([6, 2, 9])).toEqual([9, 2, 6]);
+  });
+
+  test('an empty array returns an empty array', () => {
+    expect(orderByLoShuLayout([])).toEqual([]);
+  });
+
+  test('does not add numbers that were not supplied', () => {
+    const result = orderByLoShuLayout([7, 4]);
+    expect(result).toEqual([4, 7]);
+    expect(result).toHaveLength(2);
+  });
+
+  test('does not drop any supplied number', () => {
+    const input = [6, 1, 8, 7, 3, 9, 4];
+    const result = orderByLoShuLayout(input);
+    expect(result.slice().sort((a, b) => a - b)).toEqual(input.slice().sort((a, b) => a - b));
+  });
+
+  test('does not mutate the input array', () => {
+    const input = [5, 2, 7];
+    const snapshot = [...input];
+    orderByLoShuLayout(input);
+    expect(input).toEqual(snapshot);
   });
 });
 

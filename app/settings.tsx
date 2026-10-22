@@ -1,10 +1,12 @@
 ﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Switch, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useNotificationsStore } from '@/features/notifications';
 import { useProfileStore } from '@/features/profile/store';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const profile = useProfileStore((s) => s.profile);
   const reminderEnabled = useNotificationsStore((s) => s.enabled);
   const reminderPermission = useNotificationsStore((s) => s.permission);
@@ -83,6 +85,25 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <Text style={styles.sectionLabel}>PROFILES</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => {
+              void Haptics.selectionAsync();
+              router.push('/profile/switch');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Manage your profiles"
+          >
+            <View style={styles.textBox}>
+              <Text style={styles.rowHintTitle}>Manage your profiles</Text>
+              <Text style={styles.rowSubtitle}>View, switch, or add another saved profile</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.rowHintTitle}>Plan Status</Text>
           <Text style={styles.rowSubtitle}>Free Compass (Life Path + Blockage Map)</Text>
@@ -117,6 +138,7 @@ const styles = StyleSheet.create({
   rowHintTitle: { fontSize: 14, fontWeight: '600', color: '#2C2523' },
   rowSubtitle: { fontSize: 11, color: '#7C736C', marginTop: 2, lineHeight: 16 },
   permissionHint: { fontSize: 11, color: '#8C7A5C', marginTop: 10, lineHeight: 16 },
+  chevron: { fontSize: 20, color: '#888077', fontWeight: '600' },
   upgradeButton: { backgroundColor: '#5E7563', borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   upgradeButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   disclaimerBox: { backgroundColor: '#F4F1F0', borderRadius: 12, padding: 14, marginTop: 8 },

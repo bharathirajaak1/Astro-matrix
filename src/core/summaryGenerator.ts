@@ -42,11 +42,11 @@ export const generateNumbersSummary = (
   const lp = NUMBER_TRAITS[lifePath] || { verb: 'walk', trait: 'unique purpose' };
 
   if (lifePath === secondNumber) {
-    return `Your path is deeply aligned: you ${lp.verb} with ${lp.trait} through both your Life Path (${lifePath}) and ${secondLabel} (${secondNumber}).`;
+    return `Numerology traditionally associates both your Life Path (${lifePath}) and ${secondLabel} (${secondNumber}) with the same theme: a tendency to ${lp.verb}, drawing on ${lp.trait}.`;
   }
 
   const sec = NUMBER_TRAITS[secondNumber] || { verb: 'radiate', trait: 'authentic power' };
-  return `You ${lp.verb} with ${lp.trait} (Life Path ${lifePath}) and ${sec.verb} with ${sec.trait} (${secondLabel} ${secondNumber}).`;
+  return `Numerology traditionally associates your Life Path (${lifePath}) with a tendency to ${lp.verb}, drawing on ${lp.trait}, and your ${secondLabel} (${secondNumber}) with a tendency to ${sec.verb}, drawing on ${sec.trait}.`;
 };
 
 // Lo Shu Grid Plane strength wording, keyed by the canonical Expression
@@ -63,7 +63,7 @@ const PLANE_PRIORITY_ORDER: ExpressionPlaneId[] = [
   'manifestation',
 ];
 
-const PLANE_STRENGTH_TEXT: Record<ExpressionPlaneId, string> = {
+export const PLANE_STRENGTH_TEXT: Record<ExpressionPlaneId, string> = {
   drivePersistence: 'exceptional willpower',
   mindLogic: 'razor-sharp intellect and strategy',
   actionGrounding: 'dynamic physical execution',
@@ -72,7 +72,7 @@ const PLANE_STRENGTH_TEXT: Record<ExpressionPlaneId, string> = {
   manifestation: 'tangible grounding and manifestation',
 };
 
-const MISSING_GROWTH_AREAS: Record<number, string> = {
+export const MISSING_GROWTH_AREAS: Record<number, string> = {
   1: 'assertive self-direction',
   2: 'cooperative intuition and patience',
   3: 'confident creative self-expression',

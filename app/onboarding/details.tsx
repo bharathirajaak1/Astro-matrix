@@ -9,29 +9,31 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Modal,
+  FlatList,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useProfileStore } from '@/features/profile/store';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+const getDaysInMonth = (month: number, year: number): number => new Date(year, month, 0).getDate();
+
+type DobField = 'day' | 'month' | 'year';
+
 export default function DetailsEntryScreen() {
-  const params = useLocalSearchParams();
-  const system = (params.system as any) || 'Pythagorean';
-
-  const formatDobInput = (text: string): string => {
-    if (text.endsWith('-') && text.length !== 5 && text.length !== 8) {
-      text = text.slice(0, -1);
-    }
-
-    const cleaned = text.replace(/\D/g, '').slice(0, 8);
-
-    if (cleaned.length < 4) return cleaned;
-    if (cleaned.length === 4) return `${cleaned}-`;
-    if (cleaned.length < 6) return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
-    if (cleaned.length === 6) return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-`;
-    return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-${cleaned.slice(6, 8)}`;
-  };
+  // AstroMatrix now uses the Pythagorean numerology system exclusively -
+  // there is no longer a system-selection step, so this is a fixed value
+  // rather than a route param. Matches the lowercase `NumerologySystem`
+  // literal type (`'pythagorean' | 'chaldean'`) in src/core/types.ts.
+  const system = 'pythagorean';
 
   const isValidDob = (dobStr: string): { valid: boolean; message?: string } => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dobStr)) {
@@ -66,15 +68,59 @@ export default function DetailsEntryScreen() {
   };
 
   const [fullName, setFullName] = useState('');
-  const [dob, setDob] = useState('');
+  const [dobDay, setDobDay] = useState<number | null>(null);
+  const [dobMonth, setDobMonth] = useState<number | null>(null);
+  const [dobYear, setDobYear] = useState<number | null>(null);
+  const [activePicker, setActivePicker] = useState<DobField | null>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // The existing numerology engine and `isValidDob` both expect DOB as a
+  // 'YYYY-MM-DD' string, so the three selected values are combined into
+  // that exact internal representation right before it is used/saved.
+  const buildDobString = (day: number, month: number, year: number): string =>
+    `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  const daysInSelectedMonth = dobMonth
+    ? getDaysInMonth(dobMonth, dobYear ?? CURRENT_YEAR)
+    : 31;
+
+  const selectDay = (day: number) => {
+    void Haptics.selectionAsync();
+    setDobDay(day);
+    setActivePicker(null);
+  };
+
+  const selectMonth = (month: number) => {
+    void Haptics.selectionAsync();
+    setDobMonth(month);
+    if (dobDay && dobDay > getDaysInMonth(month, dobYear ?? CURRENT_YEAR)) {
+      setDobDay(null);
+    }
+    setActivePicker(null);
+  };
+
+  const selectYear = (year: number) => {
+    void Haptics.selectionAsync();
+    setDobYear(year);
+    if (dobMonth && dobDay && dobDay > getDaysInMonth(dobMonth, year)) {
+      setDobDay(null);
+    }
+    setActivePicker(null);
+  };
 
   const handleGenerate = async () => {
     if (!fullName.trim()) {
       Alert.alert('Name Required', 'Please enter your full or preferred name.');
       return;
     }
+
+    if (!dobDay || !dobMonth || !dobYear) {
+      Alert.alert('Date of Birth Required', 'Please select your day, month, and year of birth.');
+      return;
+    }
+
+    const dob = buildDobString(dobDay, dobMonth, dobYear);
     const dobValidation = isValidDob(dob);
     if (!dobValidation.valid) {
       Alert.alert('Invalid Date of Birth', dobValidation.message);
@@ -107,14 +153,14 @@ export default function DetailsEntryScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.step}>Step 5 of 5</Text>
+          <Text style={styles.step}>Step 4 of 4</Text>
         </View>
 
         <View style={styles.content}>
           <Text style={styles.icon}>✍️</Text>
-          <Text style={styles.title}>The Gateway to Your Stars</Text>
+          <Text style={styles.title}>The Gateway to Your Blueprint</Text>
           <Text style={styles.subtitle}>
-            Enter your details exactly as they appear on your birth certificate for the most accurate reading.
+            Enter your full name and date of birth to create your personal AstroMatrix blueprint.
           </Text>
 
           <View style={styles.inputGroup}>
@@ -131,16 +177,46 @@ export default function DetailsEntryScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>DATE OF BIRTH (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#A8A29E"
-              value={dob}
-              onChangeText={(text) => setDob(formatDobInput(text))}
-              keyboardType="number-pad"
-              maxLength={10}
-            />
+            <Text style={styles.label}>DATE OF BIRTH</Text>
+            <View style={styles.dobRow}>
+              <TouchableOpacity
+                style={styles.dobSelector}
+                onPress={() => setActivePicker('day')}
+                accessibilityRole="button"
+                accessibilityLabel={dobDay ? `Day of birth, ${dobDay}` : 'Select day of birth'}
+              >
+                <Text style={dobDay ? styles.dobSelectorValue : styles.dobSelectorPlaceholder}>
+                  {dobDay ?? 'Day'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dobSelector, styles.dobSelectorMonth]}
+                onPress={() => setActivePicker('month')}
+                accessibilityRole="button"
+                accessibilityLabel={dobMonth ? `Month of birth, ${MONTH_NAMES[dobMonth - 1]}` : 'Select month of birth'}
+              >
+                <Text style={dobMonth ? styles.dobSelectorValue : styles.dobSelectorPlaceholder}>
+                  {dobMonth ? MONTH_NAMES[dobMonth - 1] : 'Month'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dobSelector}
+                onPress={() => setActivePicker('year')}
+                accessibilityRole="button"
+                accessibilityLabel={dobYear ? `Year of birth, ${dobYear}` : 'Select year of birth'}
+              >
+                <Text style={dobYear ? styles.dobSelectorValue : styles.dobSelectorPlaceholder}>
+                  {dobYear ?? 'Year'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.privacyNote}>
+            <Text style={styles.privacyNoteHeading}>Your information stays on this device.</Text>
+            <Text style={styles.privacyNoteText}>
+              Your name and date of birth are stored locally on your device to create and personalize your AstroMatrix experience.
+            </Text>
           </View>
         </View>
 
@@ -150,6 +226,57 @@ export default function DetailsEntryScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={activePicker !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActivePicker(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setActivePicker(null)}
+        >
+          <View style={styles.modalSheet} onStartShouldSetResponder={() => true}>
+            <Text style={styles.modalTitle}>
+              {activePicker === 'day' ? 'Select Day' : activePicker === 'month' ? 'Select Month' : 'Select Year'}
+            </Text>
+            <FlatList
+              data={
+                activePicker === 'day'
+                  ? Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1)
+                  : activePicker === 'month'
+                    ? MONTH_NAMES.map((_, i) => i + 1)
+                    : Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => CURRENT_YEAR - i)
+              }
+              keyExtractor={(item) => String(item)}
+              style={styles.modalList}
+              renderItem={({ item }) => {
+                const isSelected =
+                  (activePicker === 'day' && item === dobDay) ||
+                  (activePicker === 'month' && item === dobMonth) ||
+                  (activePicker === 'year' && item === dobYear);
+                return (
+                  <TouchableOpacity
+                    style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
+                    onPress={() => {
+                      if (activePicker === 'day') selectDay(item);
+                      else if (activePicker === 'month') selectMonth(item);
+                      else if (activePicker === 'year') selectYear(item);
+                    }}
+                    accessibilityRole="menuitem"
+                  >
+                    <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>
+                      {activePicker === 'month' ? MONTH_NAMES[item - 1] : item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -208,8 +335,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#78716C',
+    color: '#1C1917',
     letterSpacing: 0.8,
+  },
+  privacyNote: {
+    gap: 2,
+    marginTop: 2,
+  },
+  privacyNoteHeading: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#44403C',
+    lineHeight: 17,
+  },
+  privacyNoteText: {
+    fontSize: 12,
+    color: '#78716C',
+    lineHeight: 17,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -220,6 +362,74 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     color: '#1C1917',
+  },
+  dobRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dobSelector: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E7E5E4',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dobSelectorMonth: {
+    flex: 1.4,
+  },
+  dobSelectorValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1C1917',
+  },
+  dobSelectorPlaceholder: {
+    fontSize: 15,
+    color: '#A8A29E',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(28, 25, 23, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    maxHeight: '60%',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1C1917',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalList: {
+    maxHeight: 320,
+  },
+  modalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalOptionSelected: {
+    backgroundColor: '#EEF1EC',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#1C1917',
+  },
+  modalOptionTextSelected: {
+    fontWeight: '800',
+    color: '#57715E',
   },
   footer: {
     gap: 12,

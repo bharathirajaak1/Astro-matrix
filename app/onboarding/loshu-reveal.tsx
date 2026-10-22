@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useProfileStore } from '@/features/profile/store';
 import { buildLoShuGrid } from '@/core/loShu';
 import { Screen, Txt, Card, Button } from '@/ui/components';
@@ -20,17 +21,10 @@ export default function LoShuRevealScreen() {
   const missingDigits = GRID_ORDER.filter((d) => !counts[d] || counts[d] === 0);
 
   return (
-    <Screen>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: spacing.md,
-          paddingTop: 56,
-          paddingBottom: spacing.xxl,
-        }}
-      >
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <Screen>
         {/* Navigation & Header */}
-        <View style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.xs, marginTop: spacing.md }}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.back()}>
               <Txt variant="label" style={{ color: theme.colors.primary, fontWeight: '700' }}>
@@ -38,9 +32,22 @@ export default function LoShuRevealScreen() {
               </Txt>
             </TouchableOpacity>
             <Txt variant="label" color="textMuted">
-              STEP 2 OF 3: SACRED MATRIX
+              STEP 2 OF 3: LO SHU MATRIX
             </Txt>
           </View>
+
+          <View style={{ gap: spacing.xs }}>
+            <Txt variant="heading" style={{ fontSize: 17 }}>
+              A Different Way to Look at Your Numbers
+            </Txt>
+            <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
+              Your Core Numbers offered a way to explore your personality, motivations, and inner tendencies. The Lo Shu Matrix looks at your birth date from another perspective.
+            </Txt>
+            <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 20 }}>
+              The Lo Shu Grid is a traditional 3×3 number pattern used to explore which numbers appear in your birth date, which are repeated, and which are missing. Together, these patterns offer another lens for self-reflection.
+            </Txt>
+          </View>
+
           <Txt variant="heading">Your Energy Distribution</Txt>
         </View>
 
@@ -97,35 +104,38 @@ export default function LoShuRevealScreen() {
         {/* Energy Balance */}
         <Card style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE', gap: spacing.xs }}>
           <Txt variant="label" style={{ color: '#3730A3', fontWeight: '800' }}>
-            ENERGY BALANCE
+            YOUR NUMBER PATTERN
           </Txt>
           <Txt variant="body" style={{ color: '#4338CA', fontSize: 13, lineHeight: 18 }}>
-            You have {activeDigits.length} active numbers and {missingDigits.length} missing numbers.
+            Your birth date contains {activeDigits.length} active numbers in the Lo Shu Grid. {missingDigits.length} numbers are missing from your birth date.
           </Txt>
         </Card>
 
         {/* Concise interpretation */}
         <Txt variant="body" color="textMuted" style={{ fontSize: 13, lineHeight: 19 }}>
-          Your Sacred Matrix shows {activeDigits.length} active energy patterns and {missingDigits.length} areas to explore.
+          The Lo Shu Grid offers another way to look at the number pattern in your birth date.
         </Txt>
 
         {/* Insight & Next Step CTA */}
         <View style={{ gap: spacing.md }}>
           <Card style={styles.insightCard}>
-            <Txt variant="body" style={{ color: '#854D0E', fontSize: 13, lineHeight: 20 }}>
-              💡 <Txt variant="body" style={{ fontWeight: '700', color: '#713F12' }}>INSIGHT:</Txt> Your missing numbers pinpoint exactly where life feels recurrently exhausting. But missing numbers are not permanent deficits—they are dormant codes waiting to be balanced.
+            <Txt variant="label" style={{ color: '#713F12', fontWeight: '800' }}>
+              A DIFFERENT WAY TO LOOK AT YOUR PATTERN
+            </Txt>
+            <Txt variant="body" style={{ color: '#854D0E', fontSize: 13, lineHeight: 20, marginTop: spacing.xs }}>
+              The numbers that appear in your birth date and those that don't form part of your personal Lo Shu pattern. Together, they offer another perspective for reflection alongside your Core Numbers.
             </Txt>
           </Card>
 
           <View style={{ marginTop: spacing.xs }}>
             <Button
-              label="View Complete Energetic Audit (SWOT) →"
+              label="Explore Your Personal Pattern →"
               onPress={() => router.push('/onboarding/swot-audit')}
             />
           </View>
         </View>
-      </ScrollView>
-    </Screen>
+      </Screen>
+    </SafeAreaView>
   );
 }
 
